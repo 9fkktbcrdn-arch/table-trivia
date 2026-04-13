@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import { useTriviaStore } from "@/store/trivia-store";
 
 function difficultyLabel(d: string | null): string {
   switch (d) {
@@ -28,18 +29,25 @@ function scoreMessage(scoreRatio: number): string {
 
 function ResultsInner() {
   const router = useRouter();
+  const resetGame = useTriviaStore((s) => s.resetGame);
   const params = useSearchParams();
+  const game = params.get("game") === "1";
   const rawScore = params.get("score");
   const rawPoints = params.get("points");
   const rawMaxPoints = params.get("maxPoints");
+  const rawCorrect = params.get("correct");
+  const rawRoundCost = params.get("roundCost");
+  const player = params.get("player");
   const topic = params.get("topic");
   const difficulty = params.get("difficulty");
   const score = rawScore != null ? Number.parseInt(rawScore, 10) : NaN;
+  const totalCorrect = rawCorrect != null ? Number.parseInt(rawCorrect, 10) : NaN;
+  const roundCost = rawRoundCost != null ? Number.parseFloat(rawRoundCost) : NaN;
   const points = rawPoints != null ? Number.parseInt(rawPoints, 10) : NaN;
   const maxPoints = rawMaxPoints != null ? Number.parseInt(rawMaxPoints, 10) : NaN;
   const scoreRatio = !Number.isNaN(points) && !Number.isNaN(maxPoints) && maxPoints > 0 ? points / maxPoints : score / 10;
 
-  if (
+  if (!game && (
     !topic ||
     Number.isNaN(score) ||
     score < 0 ||
@@ -48,7 +56,7 @@ function ResultsInner() {
     Number.isNaN(maxPoints) ||
     points < 0 ||
     maxPoints <= 0
-  ) {
+  )) {
     return (
       <div className="tt-screen flex min-h-dvh flex-col items-center justify-center gap-4 bg-tt-bg px-4">
         <p className="font-body text-lg text-zinc-400">Nothing to show yet.</p>
@@ -60,6 +68,7 @@ function ResultsInner() {
   }
 
   const playAgain = () => {
+    if (game || !topic) return;
     router.push(`/quiz?topic=${encodeURIComponent(topic)}&difficulty=${difficulty ?? "normal"}&ts=${Date.now()}`);
   };
 
@@ -70,22 +79,36 @@ function ResultsInner() {
         animate={{ opacity: 1, scale: 1 }}
         className="w-full max-w-md rounded-3xl border border-tt-border bg-tt-surface/95 p-8 text-center shadow-xl"
       >
-        <p className="font-stat text-sm uppercase tracking-[0.2em] text-tt-magenta/90">Results</p>
+        <p className="font-stat text-sm uppercase tracking-[0.2em] text-tt-magenta/90">{game ? "Game Complete" : "Results"}</p>
         <h1 className="mt-2 font-stat text-4xl font-bold text-white sm:text-5xl">
           {points} / {maxPoints} pts <span aria-hidden>🎉</span>
         </h1>
-        <p className="mt-2 font-body text-zinc-400">{score} correct out of 10 questions</p>
+        <p className="mt-2 font-body text-zinc-400">{game ? `${totalCorrect} correct across all topics` : `${score} correct out of 10 questions`}</p>
         <p className="mt-4 font-body text-lg leading-relaxed text-zinc-300">{scoreMessage(scoreRatio)}</p>
         <p className="mt-2 font-body text-sm text-zinc-500">
-          {topic} · {difficultyLabel(difficulty)}
+          {game ? `${player ?? "Guest"} · Full game` : `${topic} · ${difficultyLabel(difficulty)}`}
         </p>
+        {game && !Number.isNaN(roundCost) ? (
+          <p className="mt-1 font-body text-xs text-zinc-500">AI cost this game: ${roundCost.toFixed(4)}</p>
+        ) : null}
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-          <button type="button" className="tt-btn-primary min-h-[52px] flex-1 sm:max-w-[200px]" onClick={playAgain}>
-            Play Again
-          </button>
-          <Link href="/" className="tt-btn-secondary flex min-h-[52px] flex-1 items-center justify-center sm:max-w-[200px]">
-            New Topic
+          {!game ? (
+            <button type="button" className="tt-btn-primary min-h-[52px] flex-1 sm:max-w-[200px]" onClick={playAgain}>
+              Play Again
+            </button>
+          ) : null}
+          <Link
+            href="/"
+            className="tt-btn-secondary flex min-h-[52px] flex-1 items-center justify-center sm:max-w-[200px]"
+            onClick={() => resetGame()}
+          >
+            {game ? "New Game" : "New Topic"}
           </Link>
+          {game ? (
+            <Link href="/scores" className="tt-btn-primary flex min-h-[52px] flex-1 items-center justify-center sm:max-w-[200px]">
+              High Scores
+            </Link>
+          ) : null}
         </div>
       </motion.div>
     </div>

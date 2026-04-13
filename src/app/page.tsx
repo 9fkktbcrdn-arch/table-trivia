@@ -8,11 +8,20 @@ import { getTopics } from "@/lib/db";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { GENERAL_TRIVIA_LABEL } from "@/lib/trivia-constants";
 import type { TopicRow } from "@/lib/types";
+import { useTriviaStore } from "@/store/trivia-store";
 
 export default function HomePage() {
   const router = useRouter();
   const [topics, setTopics] = useState<TopicRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [guestName, setGuestName] = useState("");
+  const playerName = useTriviaStore((s) => s.playerName);
+  const setPlayer = useTriviaStore((s) => s.setPlayer);
+  const inProgress = useTriviaStore((s) => s.inProgress);
+  const lockedTopics = useTriviaStore((s) => s.lockedTopics);
+  const completedTopics = useTriviaStore((s) => s.completedTopics);
+  const startGame = useTriviaStore((s) => s.startGame);
+  const resetGame = useTriviaStore((s) => s.resetGame);
 
   useEffect(() => {
     let cancelled = false;
@@ -30,8 +39,13 @@ export default function HomePage() {
   }, []);
 
   const slots: (TopicRow | null)[] = [0, 1, 2, 3, 4].map((i) => topics[i] ?? null);
+  const topicNames = [...slots.map((t) => t?.name).filter(Boolean), GENERAL_TRIVIA_LABEL] as string[];
 
   const goTopic = (name: string) => {
+    if (!playerName) return;
+    if (inProgress && completedTopics.includes(name)) return;
+    if (inProgress && !lockedTopics.includes(name)) return;
+    if (!inProgress) startGame(topicNames);
     router.push(`/quiz?topic=${encodeURIComponent(name)}`);
   };
 
@@ -42,16 +56,64 @@ export default function HomePage() {
       <header className="flex shrink-0 items-center justify-between gap-4 border-b border-tt-border/40 px-4 py-4 sm:px-6">
         <div className="min-w-0">
           <h1 className="font-stat text-2xl font-bold tracking-tight text-white sm:text-3xl">Table Trivia</h1>
-          <p className="mt-0.5 font-body text-sm text-zinc-500 sm:text-base">Pick a topic to start a round.</p>
+          <p className="mt-0.5 font-body text-sm text-zinc-500 sm:text-base">
+            {inProgress ? `Game in progress for ${playerName}. Finish all topics.` : "Pick a topic to start a round."}
+          </p>
         </div>
-        <Link
-          href="/settings"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-tt-border/80 bg-tt-surface/90 text-lg text-tt-cyan transition hover:border-tt-cyan/50 hover:bg-tt-surface"
-          aria-label="Topic manager"
-        >
-          ⚙️
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/scores"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-tt-border/80 bg-tt-surface/90 text-lg text-tt-cyan transition hover:border-tt-cyan/50 hover:bg-tt-surface"
+            aria-label="High scores"
+          >
+            🏆
+          </Link>
+          <Link
+            href="/settings"
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-tt-border/80 bg-tt-surface/90 text-lg text-tt-cyan transition hover:border-tt-cyan/50 hover:bg-tt-surface ${
+              inProgress ? "pointer-events-none opacity-40" : ""
+            }`}
+            aria-label="Topic manager"
+          >
+            ⚙️
+          </Link>
+        </div>
       </header>
+      {!playerName && (
+        <div className="mx-4 mt-4 rounded-2xl border border-tt-border bg-tt-surface p-4 sm:mx-6">
+          <p className="font-stat text-sm text-tt-cyan/90">Who is playing?</p>
+          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <button type="button" className="tt-btn-primary min-h-[48px]" onClick={() => setPlayer("KJC")}>
+              KJC
+            </button>
+            <button type="button" className="tt-btn-primary min-h-[48px]" onClick={() => setPlayer("CHC")}>
+              CHC
+            </button>
+            <button
+              type="button"
+              className="tt-btn-primary min-h-[48px]"
+              disabled={!guestName.trim()}
+              onClick={() => setPlayer("GUEST", guestName)}
+            >
+              Guest
+            </button>
+          </div>
+          <input
+            className="mt-3 min-h-[44px] w-full rounded-xl border border-tt-border/80 bg-tt-bg/80 px-3 font-body text-sm text-white outline-none placeholder:text-zinc-600 focus:border-tt-cyan/50"
+            placeholder="Guest name (required if choosing Guest)"
+            value={guestName}
+            onChange={(e) => setGuestName(e.target.value)}
+          />
+        </div>
+      )}
+      {inProgress && completedTopics.length === topicNames.length ? (
+        <div className="mx-4 mt-3 flex items-center justify-between rounded-xl border border-emerald-500/40 bg-emerald-900/25 px-3 py-2 sm:mx-6">
+          <p className="font-body text-sm text-emerald-200">All topics completed. Start a fresh game anytime.</p>
+          <button type="button" className="tt-btn-ghost min-h-[40px] px-3" onClick={resetGame}>
+            New game
+          </button>
+        </div>
+      ) : null}
 
       {!supabaseOk && (
         <div className="border-b border-amber-500/20 bg-amber-950/25 px-4 py-2.5 sm:px-6">
@@ -75,6 +137,8 @@ export default function HomePage() {
                     imageUrl={row.image_url}
                     onClick={() => goTopic(row.name)}
                     variant="topic"
+                    disabled={!playerName || (inProgress && completedTopics.includes(row.name))}
+                    completed={completedTopics.includes(row.name)}
                   />
                 </div>
               ) : (
@@ -90,7 +154,13 @@ export default function HomePage() {
             )}
 
             <div className="min-w-0">
-              <TopicCard title={GENERAL_TRIVIA_LABEL} onClick={() => goTopic(GENERAL_TRIVIA_LABEL)} variant="general" />
+              <TopicCard
+                title={GENERAL_TRIVIA_LABEL}
+                onClick={() => goTopic(GENERAL_TRIVIA_LABEL)}
+                variant="general"
+                disabled={!playerName || (inProgress && completedTopics.includes(GENERAL_TRIVIA_LABEL))}
+                completed={completedTopics.includes(GENERAL_TRIVIA_LABEL)}
+              />
             </div>
 
           </div>

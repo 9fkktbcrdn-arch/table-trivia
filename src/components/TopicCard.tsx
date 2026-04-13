@@ -12,11 +12,12 @@ interface TopicCardProps {
   disabled?: boolean;
   /** Saved topics only: HTTPS URL for a full-bleed background (JPG/PNG/WebP). */
   imageUrl?: string | null;
+  completed?: boolean;
 }
 
 const ICON_ROW = "relative z-10 flex h-8 shrink-0 items-center justify-center text-xl leading-none drop-shadow-md";
 
-export function TopicCard({ title, subtitle, onClick, variant = "topic", disabled, imageUrl }: TopicCardProps) {
+export function TopicCard({ title, subtitle, onClick, variant = "topic", disabled, imageUrl, completed }: TopicCardProps) {
   const isEmpty = variant === "empty";
   const trimmedUrl = imageUrl?.trim() ?? "";
   /** URL that failed to load — hide image until the URL changes. */
@@ -55,6 +56,11 @@ export function TopicCard({ title, subtitle, onClick, variant = "topic", disable
           />
         </>
       )}
+      {completed ? (
+        <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-black/45">
+          <span className="font-stat text-6xl font-black text-tt-rose drop-shadow-[0_0_20px_rgba(244,63,94,0.75)]">X</span>
+        </div>
+      ) : null}
 
       <div className={ICON_ROW} aria-hidden>
         {variant === "general" ? "⭐" : variant === "create" ? "✏️" : showImage ? null : <span className="opacity-0">·</span>}

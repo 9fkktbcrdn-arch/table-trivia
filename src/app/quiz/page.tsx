@@ -20,6 +20,9 @@ function QuizFlow() {
   const difficultyParam = params.get("difficulty") as TriviaDifficulty | null;
   const replayNonce = params.get("ts");
   const gameMode = useTriviaStore((s) => s.gameMode);
+  const playerName = useTriviaStore((s) => s.playerName);
+  const completeTopic = useTriviaStore((s) => s.completeTopic);
+  const addUsage = useTriviaStore((s) => s.addUsage);
 
   const [difficulty, setDifficulty] = useState<TriviaDifficulty | null>(difficultyParam);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -69,6 +72,9 @@ function QuizFlow() {
         error?: string;
         hint?: string;
         demoMode?: boolean;
+        inputTokens?: number;
+        outputTokens?: number;
+        estimatedCostUsd?: number;
       };
       if (!res.ok) {
         const parts = [data.error, data.hint].filter(Boolean);
@@ -81,12 +87,15 @@ function QuizFlow() {
       }
       setQuestions(data.questions);
       setDemoMode(Boolean(data.demoMode));
+      if (!data.demoMode) {
+        addUsage(data.inputTokens ?? 0, data.outputTokens ?? 0, data.estimatedCostUsd ?? 0);
+      }
     } catch {
       setError("Couldn't generate questions, try again.");
     } finally {
       setLoading(false);
     }
-  }, [topic, difficulty, replayNonce]);
+  }, [topic, difficulty, replayNonce, addUsage]);
 
   useEffect(() => {
     if (!topic) return;
@@ -119,22 +128,44 @@ function QuizFlow() {
       setRevealed(false);
       return;
     }
-    await saveScore({
-      topic,
-      difficulty,
-      score: pointsTotal,
-      mode: gameMode,
-    });
     const maxPoints = maxPointsForQuestions(difficulty, questions);
-    router.push(
-      `/results?score=${correctTotal}&points=${pointsTotal}&maxPoints=${maxPoints}&topic=${encodeURIComponent(topic)}&difficulty=${difficulty}&mode=${gameMode}`,
-    );
+    completeTopic(topic, pointsTotal, correctTotal, maxPoints);
+    const state = useTriviaStore.getState();
+    const finished = state.completedTopics.length >= state.lockedTopics.length && state.lockedTopics.length > 0;
+    if (finished) {
+      await saveScore({
+        topic: "Full Game (6 topics)",
+        difficulty: "session",
+        score: state.totalPoints,
+        mode: gameMode,
+        playerName: playerName ?? "Guest",
+      });
+      router.push(
+        `/results?game=1&points=${state.totalPoints}&maxPoints=${state.totalMaxPoints}&correct=${state.totalCorrect}&roundCost=${state.currentGameEstimatedCostUsd.toFixed(
+          4,
+        )}&player=${encodeURIComponent(
+          state.playerName ?? "Guest",
+        )}`,
+      );
+      return;
+    }
+    router.push(`/?completed=${encodeURIComponent(topic)}`);
   };
 
   if (!topic?.trim()) {
     return (
       <div className="tt-screen flex min-h-dvh flex-col items-center justify-center gap-4 px-4">
         <p className="font-body text-lg text-zinc-400">Missing topic.</p>
+        <Link href="/" className="tt-btn-primary min-h-[48px] px-6">
+          Home
+        </Link>
+      </div>
+    );
+  }
+  if (!playerName) {
+    return (
+      <div className="tt-screen flex min-h-dvh flex-col items-center justify-center gap-4 px-4">
+        <p className="font-body text-lg text-zinc-400">Pick a player first.</p>
         <Link href="/" className="tt-btn-primary min-h-[48px] px-6">
           Home
         </Link>

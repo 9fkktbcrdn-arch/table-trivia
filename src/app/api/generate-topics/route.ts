@@ -4,6 +4,11 @@ import { NextResponse } from "next/server";
 export const runtime = "nodejs";
 
 const MODEL_FALLBACKS = ["claude-sonnet-4-6", "claude-sonnet-4-20250514"] as const;
+const MODEL_PRICING_PER_MTOK: Record<string, { input: number; output: number }> = {
+  "claude-opus-4-6": { input: 5, output: 25 },
+  "claude-sonnet-4-6": { input: 3, output: 15 },
+  "claude-sonnet-4-20250514": { input: 3, output: 15 },
+};
 
 function modelCandidates(): string[] {
   const preferred = process.env.ANTHROPIC_QUIZ_MODEL?.trim();
@@ -80,7 +85,11 @@ export async function POST(req: Request) {
       const block = message.content.find((b) => b.type === "text");
       if (!block || block.type !== "text") throw new Error("No text in model response");
       const topics = parseTopicsJson(block.text);
-      return NextResponse.json({ topics, modelUsed: model, theme });
+      const inputTokens = message.usage?.input_tokens ?? 0;
+      const outputTokens = message.usage?.output_tokens ?? 0;
+      const price = MODEL_PRICING_PER_MTOK[model] ?? MODEL_PRICING_PER_MTOK["claude-sonnet-4-6"];
+      const estimatedCostUsd = (inputTokens / 1_000_000) * price.input + (outputTokens / 1_000_000) * price.output;
+      return NextResponse.json({ topics, modelUsed: model, theme, inputTokens, outputTokens, estimatedCostUsd });
     } catch (e) {
       console.warn(`[generate-topics] model ${model} failed`, e);
     }

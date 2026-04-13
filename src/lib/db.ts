@@ -122,3 +122,19 @@ export async function getScores(limit = 50): Promise<ScoreRow[]> {
   }
   return (data ?? []) as ScoreRow[];
 }
+
+export async function getHighScores(limit = 20): Promise<ScoreRow[]> {
+  if (!isSupabaseConfigured()) return [];
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("scores")
+    .select("*")
+    .order("score", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) {
+    console.error("getHighScores", error);
+    return [];
+  }
+  return (data ?? []) as ScoreRow[];
+}

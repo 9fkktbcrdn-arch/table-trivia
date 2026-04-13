@@ -22,6 +22,13 @@ const MODEL_FALLBACKS = [
   "claude-3-5-sonnet-20241022",
 ] as const;
 
+const MODEL_PRICING_PER_MTOK: Record<string, { input: number; output: number }> = {
+  "claude-opus-4-6": { input: 5, output: 25 },
+  "claude-sonnet-4-6": { input: 3, output: 15 },
+  "claude-sonnet-4-20250514": { input: 3, output: 15 },
+  "claude-3-5-sonnet-20241022": { input: 3, output: 15 },
+};
+
 function modelCandidates(): string[] {
   const preferred = process.env.ANTHROPIC_QUIZ_MODEL?.trim();
   const list = preferred ? [preferred, ...MODEL_FALLBACKS] : [...MODEL_FALLBACKS];
@@ -162,7 +169,7 @@ async function generateWithModel(
   model: string,
   topic: string,
   difficulty: TriviaDifficulty,
-): Promise<QuizQuestion[]> {
+): Promise<{ questions: QuizQuestion[]; inputTokens: number; outputTokens: number; estimatedCostUsd: number }> {
   const message = await anthropic.messages.create({
     model,
     max_tokens: 8192,
@@ -196,7 +203,11 @@ async function generateWithModel(
   if (counts.easy !== expected.easy || counts.medium !== expected.medium || counts.hard !== expected.hard) {
     throw new Error("Wrong difficulty mix");
   }
-  return validated;
+  const inputTokens = message.usage?.input_tokens ?? 0;
+  const outputTokens = message.usage?.output_tokens ?? 0;
+  const price = MODEL_PRICING_PER_MTOK[model] ?? MODEL_PRICING_PER_MTOK["claude-sonnet-4-6"];
+  const estimatedCostUsd = (inputTokens / 1_000_000) * price.input + (outputTokens / 1_000_000) * price.output;
+  return { questions: validated, inputTokens, outputTokens, estimatedCostUsd };
 }
 
 export async function POST(req: Request) {
@@ -231,8 +242,8 @@ export async function POST(req: Request) {
 
   for (const model of candidates) {
     try {
-      const questions = await generateWithModel(anthropic, model, topic, difficulty);
-      return NextResponse.json({ questions, modelUsed: model });
+      const generated = await generateWithModel(anthropic, model, topic, difficulty);
+      return NextResponse.json({ ...generated, modelUsed: model });
     } catch (e) {
       lastErr = e;
       if (e instanceof AuthenticationError) {
