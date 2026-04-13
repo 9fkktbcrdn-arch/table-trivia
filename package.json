@@ -5,6 +5,8 @@
   "description": "Table Trivia — mobile-first dinner table trivia (Next.js + Supabase + Claude)",
   "scripts": {
     "dev": "next dev",
+    "dev:3010": "next dev -p 3010",
+    "dev:tt": "next dev -p 3456",
     "build": "next build",
     "start": "next start",
     "lint": "eslint ."

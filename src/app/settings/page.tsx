@@ -1,23 +1,22 @@
 "use client";
 
-import { motion } from "framer-motion";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import {
-  addTopic,
-  deleteTopic,
-  getTopics,
-  reorderTopics,
-  updateTopic,
-} from "@/lib/db";
+import { addTopic, deleteTopic, getTopics, reorderTopics, updateTopic } from "@/lib/db";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import type { TopicRow } from "@/lib/types";
+
+const MAX_TOPICS = 5;
 
 export default function SettingsPage() {
   const [topics, setTopics] = useState<TopicRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [newName, setNewName] = useState("");
+  const [newImageUrl, setNewImageUrl] = useState("");
   const [saving, setSaving] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [themeSeed, setThemeSeed] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -58,7 +57,17 @@ export default function SettingsPage() {
 
   const onRename = async (id: string, name: string) => {
     setSaving(true);
-    await updateTopic(id, name);
+    await updateTopic(id, { name });
+    await load();
+    setSaving(false);
+  };
+
+  const onImageUrlBlur = async (id: string, previousUrl: string | null, value: string) => {
+    const next = value.trim() || null;
+    const prev = previousUrl?.trim() || null;
+    if (next === prev) return;
+    setSaving(true);
+    await updateTopic(id, { image_url: next });
     await load();
     setSaving(false);
   };
@@ -74,11 +83,54 @@ export default function SettingsPage() {
   const onAdd = async () => {
     const n = newName.trim();
     if (!n) return;
+    if (topics.length >= MAX_TOPICS) {
+      setNotice(`You already have ${MAX_TOPICS} topics. Delete one or use Randomize 5.`);
+      return;
+    }
     setSaving(true);
-    await addTopic(n);
+    setNotice(null);
+    await addTopic(n, newImageUrl.trim() || null);
     setNewName("");
+    setNewImageUrl("");
     await load();
     setSaving(false);
+  };
+
+  const onRandomizeTopics = async () => {
+    const theme = themeSeed.trim();
+    if (!theme) {
+      setNotice("Enter a theme first (example: Space, 90s, Animals).");
+      return;
+    }
+    if (!confirm(`Replace your current topics with 5 new random ones?`)) return;
+    setGenerating(true);
+    setSaving(true);
+    setNotice(null);
+    try {
+      const res = await fetch("/api/generate-topics", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ theme }),
+      });
+      const data = (await res.json()) as { topics?: string[]; error?: string };
+      if (!res.ok || !data.topics || data.topics.length !== MAX_TOPICS) {
+        setNotice(data.error ?? "Couldn't generate topics right now.");
+        return;
+      }
+
+      // Replace all saved topics so home always shows exactly these five.
+      await Promise.all(topics.map((t) => deleteTopic(t.id)));
+      for (const name of data.topics) {
+        await addTopic(name);
+      }
+      await load();
+      setNotice(`Topics updated from theme: "${theme}".`);
+    } catch {
+      setNotice("Couldn't generate topics right now.");
+    } finally {
+      setGenerating(false);
+      setSaving(false);
+    }
   };
 
   if (!supabaseOk) {
@@ -106,27 +158,38 @@ export default function SettingsPage() {
           <p className="font-body text-sm text-zinc-500">Saved on Supabase for every device.</p>
         </div>
       </header>
+      {notice ? <p className="mb-4 rounded-xl border border-tt-border/80 bg-tt-surface/70 px-3 py-2 text-sm text-zinc-300">{notice}</p> : null}
 
       {loading ? (
         <p className="text-zinc-500">Loading…</p>
       ) : (
-        <ul className="flex flex-col gap-3">
+        <ul className="flex flex-col gap-4">
           {topics.map((t, i) => (
-            <motion.li
+            <li
               key={t.id}
-              layout
-              className="flex flex-col gap-2 rounded-2xl border border-tt-border bg-tt-surface/90 p-3 sm:flex-row sm:items-center"
+              className="flex flex-col gap-2 rounded-2xl border border-tt-border bg-tt-surface/90 p-3 sm:p-4"
             >
               <input
+                key={`name-${t.id}-${t.name}`}
                 defaultValue={t.name}
                 disabled={saving}
                 onBlur={(e) => {
                   const v = e.target.value.trim();
                   if (v && v !== t.name) void onRename(t.id, v);
                 }}
-                className="min-h-[48px] flex-1 rounded-xl border border-tt-border bg-tt-bg px-3 font-body text-lg text-white outline-none focus:border-tt-cyan/60"
+                className="min-h-[48px] w-full rounded-xl border border-tt-border bg-tt-bg px-3 font-body text-lg text-white outline-none focus:border-tt-cyan/60"
+                aria-label="Topic name"
               />
-              <div className="flex shrink-0 gap-2">
+              <input
+                key={`img-${t.id}-${t.image_url ?? ""}`}
+                defaultValue={t.image_url ?? ""}
+                disabled={saving}
+                onBlur={(e) => void onImageUrlBlur(t.id, t.image_url, e.target.value)}
+                placeholder="Image URL (optional) — paste a direct link to a .jpg or .png"
+                className="min-h-[44px] w-full rounded-xl border border-tt-border/80 bg-tt-bg/80 px-3 font-body text-sm text-white outline-none placeholder:text-zinc-600 focus:border-tt-cyan/50"
+                aria-label="Topic image URL"
+              />
+              <div className="flex shrink-0 flex-wrap gap-2">
                 <button
                   type="button"
                   className="tt-btn-ghost min-h-[48px] min-w-[48px] px-0"
@@ -154,26 +217,59 @@ export default function SettingsPage() {
                   Delete
                 </button>
               </div>
-            </motion.li>
+            </li>
           ))}
         </ul>
       )}
 
       <div className="mt-6 rounded-2xl border border-dashed border-tt-border/80 bg-tt-bg/80 p-4">
-        <p className="font-stat text-sm font-semibold text-tt-cyan/90">Add topic</p>
-        <div className="mt-2 flex flex-col gap-2 sm:flex-row">
-          <input
-            className="min-h-[48px] flex-1 rounded-xl border border-tt-border bg-tt-surface px-3 font-body text-lg text-white outline-none focus:border-tt-cyan/60"
-            placeholder="e.g. How to Train Your Dragon"
-            value={newName}
-            disabled={saving}
-            onChange={(e) => setNewName(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && void onAdd()}
-          />
-          <button type="button" className="tt-btn-primary min-h-[48px] px-6" disabled={saving} onClick={() => void onAdd()}>
+        <p className="font-stat text-sm font-semibold text-tt-cyan/90">Add topic ({topics.length}/{MAX_TOPICS})</p>
+        <p className="mt-1 font-body text-xs text-zinc-500">
+          For tile art, use a <strong>direct image link</strong> (ends in .jpg / .png / .webp or a CDN URL that shows only the image). Run the SQL migration{" "}
+          <code className="text-zinc-400">002_topic_image_url.sql</code> in Supabase if you haven&apos;t yet.
+        </p>
+        <input
+          className="mt-3 min-h-[48px] w-full rounded-xl border border-tt-border bg-tt-surface px-3 font-body text-lg text-white outline-none focus:border-tt-cyan/60"
+          placeholder="Topic name, e.g. Liverpool FC"
+          value={newName}
+          disabled={saving || topics.length >= MAX_TOPICS}
+          onChange={(e) => setNewName(e.target.value)}
+        />
+        <input
+          className="mt-2 min-h-[44px] w-full rounded-xl border border-tt-border/80 bg-tt-bg/80 px-3 font-body text-sm text-white outline-none placeholder:text-zinc-600 focus:border-tt-cyan/50"
+          placeholder="Optional image URL for the home tile"
+          value={newImageUrl}
+          disabled={saving || topics.length >= MAX_TOPICS}
+          onChange={(e) => setNewImageUrl(e.target.value)}
+        />
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+          <button
+            type="button"
+            className="tt-btn-primary min-h-[48px] w-full sm:w-auto sm:px-8"
+            disabled={saving || topics.length >= MAX_TOPICS}
+            onClick={() => void onAdd()}
+          >
             Add
           </button>
+          <button
+            type="button"
+            className="tt-btn-ghost min-h-[48px] w-full sm:w-auto sm:px-8"
+            disabled={saving || generating}
+            onClick={() => void onRandomizeTopics()}
+          >
+            {generating ? "Generating..." : "Generate 5 From Theme"}
+          </button>
         </div>
+        <label className="mt-3 flex flex-col gap-1 font-body text-xs text-zinc-500">
+          Theme for related categories
+          <input
+            className="min-h-[44px] rounded-xl border border-tt-border/80 bg-tt-bg/80 px-3 font-body text-sm text-white outline-none placeholder:text-zinc-600 focus:border-tt-cyan/50"
+            placeholder="Example: Space, Marvel, 1980s, Nature"
+            value={themeSeed}
+            disabled={saving || generating}
+            onChange={(e) => setThemeSeed(e.target.value)}
+          />
+        </label>
       </div>
     </div>
   );

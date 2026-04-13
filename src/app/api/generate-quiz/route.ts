@@ -1,19 +1,41 @@
-import Anthropic from "@anthropic-ai/sdk";
+import Anthropic, {
+  APIError,
+  AuthenticationError,
+  BadRequestError,
+  NotFoundError,
+  PermissionDeniedError,
+  RateLimitError,
+} from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
-import type { GenerateQuizPayload, QuizQuestion, TriviaDifficulty } from "@/lib/types";
+import { OFFLINE_DEMO_QUESTIONS_RAW } from "@/lib/offline-demo-quiz";
+import type { GenerateQuizPayload, QuestionDifficulty, QuizQuestion, TriviaDifficulty } from "@/lib/types";
 
 export const runtime = "nodejs";
 
-const MODEL = "claude-sonnet-4-20250514";
+/**
+ * Tried in order until one works. Sonnet first — Opus often 404s or is blocked on newer API keys.
+ * Override with ANTHROPIC_QUIZ_MODEL (single id) to force a model; fallbacks still run if it fails.
+ */
+const MODEL_FALLBACKS = [
+  "claude-sonnet-4-6",
+  "claude-sonnet-4-20250514",
+  "claude-3-5-sonnet-20241022",
+] as const;
+
+function modelCandidates(): string[] {
+  const preferred = process.env.ANTHROPIC_QUIZ_MODEL?.trim();
+  const list = preferred ? [preferred, ...MODEL_FALLBACKS] : [...MODEL_FALLBACKS];
+  return [...new Set(list)];
+}
 
 function difficultyGuidance(d: TriviaDifficulty): string {
   switch (d) {
     case "noob":
-      return `Difficulty: NOOB (easy). Questions must be simple recall suitable for kids about ages 6–10: straightforward facts, no trick wording, well-known details only.`;
+      return `Difficulty profile: NOOB (overall easy). Use a blend of 6 easy, 3 medium, 1 hard question. Suitable for kids about ages 6–10: one clearly correct fact, no trick wording, no “all of the above,” no negatives like “which is NOT…”.`;
     case "normal":
-      return `Difficulty: NORMAL (medium). Moderate challenge: fine for older kids and casual adults; mix of common and less-obvious facts.`;
+      return `Difficulty profile: NORMAL (overall medium). Use a blend of 3 easy, 4 medium, 3 hard questions. One unambiguous correct answer; plausible wrong answers in the same category (e.g. same sport, same era). Avoid trick phrasing unless the fact itself is the challenge.`;
     case "grandmaster":
-      return `Difficulty: GRAND MASTER (hard). Expert-level, deep-cut, and specific knowledge that would challenge a devoted fan of the topic.`;
+      return `Difficulty profile: GRANDMASTER (overall hard). Use a blend of 1 easy, 3 medium, 6 hard questions. Deep-cut, specific knowledge for a devoted fan—still one objectively correct answer, no deliberate ambiguity or “two could work” unless you rewrite the stem to rule one out.`;
     default:
       return "";
   }
@@ -31,15 +53,23 @@ ${difficultyGuidance(difficulty)}
 
 Generate exactly 10 multiple-choice trivia questions.
 
+Quality (do this before you output):
+- Prefer facts you are confident about; avoid precise dates/statistics unless standard textbook knowledge.
+- Stem must be a complete question or clear fill-in; no broken grammar.
+- All four answers short, parallel in form (e.g. all proper nouns, or all numbers), similar length when possible.
+- The four answers must be distinct strings (no duplicates).
+- Wrong answers must be plausible but definitively incorrect for the stem you wrote.
+- Include a "questionDifficulty" field for each item with value "easy" | "medium" | "hard".
+
 Rules:
 - Each question has exactly 4 answer choices (strings).
-- Exactly one answer is correct.
-- Vary question style; avoid repeating the same phrasing.
-- "correctIndex" is 0–3 pointing into the "answers" array (before any client-side shuffling).
+- Exactly one answer is correct for the stem as written.
+- Vary question style; avoid repeating the same opening words.
+- "correctIndex" is 0–3 into the "answers" array (before any client-side shuffling).
 - Return ONLY a JSON array (no markdown fences, no commentary, no preamble). The JSON must parse with JSON.parse.
 
 Each array element must be an object with this shape:
-{ "question": string, "answers": [string, string, string, string], "correctIndex": number }
+{ "question": string, "answers": [string, string, string, string], "correctIndex": number, "questionDifficulty": "easy" | "medium" | "hard" }
 
 The "answers" array must always have length 4.`;
 }
@@ -60,8 +90,11 @@ function isValidQuestion(item: unknown): item is QuizQuestion {
   if (typeof o.question !== "string" || o.question.length < 3) return false;
   if (!Array.isArray(o.answers) || o.answers.length !== 4) return false;
   if (!o.answers.every((a) => typeof a === "string" && a.length > 0)) return false;
+  const normalized = o.answers.map((a) => (a as string).trim().toLowerCase());
+  if (new Set(normalized).size !== 4) return false;
   if (typeof o.correctIndex !== "number" || !Number.isInteger(o.correctIndex)) return false;
   if (o.correctIndex < 0 || o.correctIndex > 3) return false;
+  if (!["easy", "medium", "hard"].includes((o.questionDifficulty as string) ?? "")) return false;
   return true;
 }
 
@@ -77,10 +110,94 @@ function shuffleQuestion(q: QuizQuestion): QuizQuestion {
     question: q.question,
     answers: answers as [string, string, string, string],
     correctIndex,
+    questionDifficulty: q.questionDifficulty,
   };
 }
 
-const SYSTEM = `You are an expert trivia writer. You output only valid JSON when asked. Never include markdown, apologies, or text outside the JSON array.`;
+const SYSTEM = `You are an expert trivia editor: factual, fair, and readable. You output only valid JSON when asked—never markdown fences, apologies, or text outside the JSON array.`;
+
+function isModelOrAvailabilityError(e: unknown): boolean {
+  if (e instanceof NotFoundError) return true;
+  if (e instanceof BadRequestError) {
+    const m = (e.message ?? "").toLowerCase();
+    return m.includes("model") || m.includes("not_found");
+  }
+  if (e instanceof APIError && typeof e.status === "number") {
+    if (e.status === 404) return true;
+    if (e.status === 400) {
+      const m = (e.message ?? "").toLowerCase();
+      return m.includes("model");
+    }
+  }
+  return false;
+}
+
+function isRetryableGenerationError(e: unknown): boolean {
+  if (!(e instanceof Error)) return false;
+  const m = e.message;
+  return (
+    m.includes("No JSON array") ||
+    m.includes("Response is not an array") ||
+    m.includes("Expected 10 questions") ||
+    m.includes("Invalid question object") ||
+    m.includes("Wrong difficulty mix")
+  );
+}
+
+function expectedDifficultyMix(difficulty: TriviaDifficulty): Record<QuestionDifficulty, number> {
+  switch (difficulty) {
+    case "noob":
+      return { easy: 6, medium: 3, hard: 1 };
+    case "normal":
+      return { easy: 3, medium: 4, hard: 3 };
+    case "grandmaster":
+      return { easy: 1, medium: 3, hard: 6 };
+    default:
+      return { easy: 3, medium: 4, hard: 3 };
+  }
+}
+
+async function generateWithModel(
+  anthropic: Anthropic,
+  model: string,
+  topic: string,
+  difficulty: TriviaDifficulty,
+): Promise<QuizQuestion[]> {
+  const message = await anthropic.messages.create({
+    model,
+    max_tokens: 8192,
+    system: SYSTEM,
+    messages: [{ role: "user", content: buildUserPrompt(topic, difficulty) }],
+  });
+
+  const block = message.content.find((b) => b.type === "text");
+  if (!block || block.type !== "text") {
+    throw new Error("No text in model response");
+  }
+
+  const raw = parseQuizJson(block.text);
+  if (!Array.isArray(raw)) {
+    throw new Error("Response is not an array");
+  }
+  if (raw.length !== 10) {
+    throw new Error(`Expected 10 questions, got ${raw.length}`);
+  }
+
+  const validated: QuizQuestion[] = [];
+  for (const item of raw) {
+    if (!isValidQuestion(item)) {
+      throw new Error("Invalid question object in array");
+    }
+    validated.push(shuffleQuestion(item));
+  }
+  const counts = { easy: 0, medium: 0, hard: 0 };
+  for (const q of validated) counts[q.questionDifficulty]++;
+  const expected = expectedDifficultyMix(difficulty);
+  if (counts.easy !== expected.easy || counts.medium !== expected.medium || counts.hard !== expected.hard) {
+    throw new Error("Wrong difficulty mix");
+  }
+  return validated;
+}
 
 export async function POST(req: Request) {
   let body: GenerateQuizPayload;
@@ -99,48 +216,63 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid difficulty" }, { status: 400 });
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
   if (!apiKey) {
-    return NextResponse.json({ error: "Server misconfigured: missing API key" }, { status: 500 });
+    console.warn(
+      "[generate-quiz] ANTHROPIC_API_KEY not set — using bundled demo questions. Add the key to .env.local for AI-generated quizzes.",
+    );
+    const demo = OFFLINE_DEMO_QUESTIONS_RAW.map((q) => shuffleQuestion(q));
+    return NextResponse.json({ questions: demo, demoMode: true });
   }
 
   const anthropic = new Anthropic({ apiKey });
+  const candidates = modelCandidates();
+  let lastErr: unknown;
 
-  try {
-    const message = await anthropic.messages.create({
-      model: MODEL,
-      max_tokens: 8192,
-      system: SYSTEM,
-      messages: [{ role: "user", content: buildUserPrompt(topic, difficulty) }],
-    });
-
-    const block = message.content.find((b) => b.type === "text");
-    if (!block || block.type !== "text") {
-      throw new Error("No text in model response");
-    }
-
-    const raw = parseQuizJson(block.text);
-    if (!Array.isArray(raw)) {
-      throw new Error("Response is not an array");
-    }
-    if (raw.length !== 10) {
-      throw new Error(`Expected 10 questions, got ${raw.length}`);
-    }
-
-    const validated: QuizQuestion[] = [];
-    for (const item of raw) {
-      if (!isValidQuestion(item)) {
-        throw new Error("Invalid question object in array");
+  for (const model of candidates) {
+    try {
+      const questions = await generateWithModel(anthropic, model, topic, difficulty);
+      return NextResponse.json({ questions, modelUsed: model });
+    } catch (e) {
+      lastErr = e;
+      if (e instanceof AuthenticationError) {
+        return NextResponse.json(
+          {
+            error: "Anthropic rejected your API key.",
+            hint: "Check ANTHROPIC_API_KEY in .env.local (no spaces, no quotes). Restart npm run dev after saving.",
+          },
+          { status: 401 },
+        );
       }
-      validated.push(shuffleQuestion(item));
+      if (e instanceof PermissionDeniedError) {
+        return NextResponse.json(
+          {
+            error: "Anthropic denied access for this key or model.",
+            hint: "Confirm billing is enabled in the Anthropic console and your key is active.",
+          },
+          { status: 403 },
+        );
+      }
+      if (e instanceof RateLimitError) {
+        return NextResponse.json(
+          { error: "Too many requests from Anthropic.", hint: "Wait a minute and try again." },
+          { status: 429 },
+        );
+      }
+      if (isModelOrAvailabilityError(e) || isRetryableGenerationError(e)) {
+        console.warn(`[generate-quiz] model ${model} failed, trying next if any`, e);
+        continue;
+      }
+      break;
     }
-
-    return NextResponse.json({ questions: validated });
-  } catch (e) {
-    console.error("generate-quiz", e);
-    return NextResponse.json(
-      { error: "Couldn't generate questions, try again." },
-      { status: 502 },
-    );
   }
+
+  console.error("generate-quiz", lastErr);
+  return NextResponse.json(
+    {
+      error: "Couldn't generate questions. Try again.",
+      hint: "If this keeps happening, set ANTHROPIC_QUIZ_MODEL to a model your account supports (see Anthropic docs) and restart the dev server.",
+    },
+    { status: 502 },
+  );
 }

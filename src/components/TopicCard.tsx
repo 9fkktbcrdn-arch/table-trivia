@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useState } from "react";
 
 type TopicCardVariant = "topic" | "general" | "create" | "empty";
 
@@ -10,42 +10,69 @@ interface TopicCardProps {
   onClick: () => void;
   variant?: TopicCardVariant;
   disabled?: boolean;
+  /** Saved topics only: HTTPS URL for a full-bleed background (JPG/PNG/WebP). */
+  imageUrl?: string | null;
 }
 
-export function TopicCard({ title, subtitle, onClick, variant = "topic", disabled }: TopicCardProps) {
+const ICON_ROW = "relative z-10 flex h-8 shrink-0 items-center justify-center text-xl leading-none drop-shadow-md";
+
+export function TopicCard({ title, subtitle, onClick, variant = "topic", disabled, imageUrl }: TopicCardProps) {
   const isEmpty = variant === "empty";
+  const trimmedUrl = imageUrl?.trim() ?? "";
+  /** URL that failed to load — hide image until the URL changes. */
+  const [failedUrl, setFailedUrl] = useState("");
+  const showImage =
+    Boolean(trimmedUrl) && variant === "topic" && !isEmpty && failedUrl !== trimmedUrl;
+
   return (
-    <motion.button
+    <button
       type="button"
       disabled={disabled || isEmpty}
       onClick={onClick}
-      whileTap={isEmpty || disabled ? undefined : { scale: 0.97 }}
       className={[
-        "flex min-h-[96px] flex-col items-center justify-center rounded-2xl border-2 px-3 py-4 text-center shadow-lg transition",
+        "relative flex h-[132px] w-full flex-col overflow-hidden rounded-2xl border px-3 py-3 text-center shadow-md transition sm:h-[144px] sm:px-4",
         isEmpty
-          ? "cursor-default border-tt-border/40 bg-tt-surface/40 text-zinc-500"
-          : "border-tt-cyan/50 bg-gradient-to-br from-tt-surface to-tt-bg text-parchment active:border-tt-lime/80",
-        !isEmpty && !disabled && "hover:border-tt-lime/70 hover:shadow-[0_0_24px_rgba(34,211,238,0.15)]",
+          ? "cursor-default border-tt-border/50 bg-tt-surface/30 text-zinc-500"
+          : showImage
+            ? "border-white/20 active:scale-[0.98] active:border-white/30"
+            : "border-tt-border/80 bg-gradient-to-b from-tt-surface to-tt-bg/95 text-parchment hover:border-tt-cyan/50 hover:shadow-[0_0_20px_rgba(34,211,238,0.12)] active:scale-[0.98] active:border-tt-cyan/40",
       ]
         .filter(Boolean)
         .join(" ")}
     >
-      {variant === "general" && (
-        <span className="mb-1 text-2xl" aria-hidden>
-          ⭐
-        </span>
+      {showImage && (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={trimmedUrl}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+            onError={() => setFailedUrl(trimmedUrl)}
+          />
+          <div
+            className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/25"
+            aria-hidden
+          />
+        </>
       )}
-      {variant === "create" && (
-        <span className="mb-1 text-2xl" aria-hidden>
-          ✏️
-        </span>
-      )}
-      <span className={`font-stat text-lg font-bold leading-tight sm:text-xl ${isEmpty ? "text-zinc-500" : "text-white"}`}>
+
+      <div className={ICON_ROW} aria-hidden>
+        {variant === "general" ? "⭐" : variant === "create" ? "✏️" : showImage ? null : <span className="opacity-0">·</span>}
+      </div>
+      <span
+        className={`relative z-10 line-clamp-2 min-h-[2.75rem] font-stat text-[1.05rem] font-bold leading-snug drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] sm:text-lg ${
+          isEmpty ? "text-zinc-500" : "text-white"
+        }`}
+      >
         {title}
       </span>
       {subtitle ? (
-        <span className="mt-1 font-body text-sm text-zinc-400">{subtitle}</span>
-      ) : null}
-    </motion.button>
+        <span className="relative z-10 mt-auto line-clamp-1 pt-1 font-body text-xs text-zinc-400 drop-shadow-md sm:text-sm">
+          {subtitle}
+        </span>
+      ) : (
+        <span className="relative z-10 mt-auto h-5 shrink-0 sm:h-5" aria-hidden />
+      )}
+    </button>
   );
 }

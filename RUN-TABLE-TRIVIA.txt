@@ -1,0 +1,48 @@
+TABLE TRIVIA — DO THIS (in order)
+
+────────────────────────────────────────
+ONE-TIME: API KEY
+────────────────────────────────────────
+1. Open the file named:  .env.local  (same folder as this file).
+
+2. Find this line:
+   ANTHROPIC_API_KEY=
+
+3. Paste your key right after the = (no spaces, no quotes).
+   Example shape:  sk-ant-api03-.......
+
+4. Get a key here if you need one:
+   https://console.anthropic.com/settings/keys
+
+5. Save the file (Cmd+S).
+
+────────────────────────────────────────
+EVERY TIME YOU WANT TO PLAY
+────────────────────────────────────────
+1. Open Terminal (Spotlight: type Terminal, press Enter).
+
+2. Paste these two lines and press Enter after each:
+
+   cd /Users/ryancary/table-trivia
+   npm run dev:tt
+
+3. Wait until you see "Ready" in Terminal.
+
+4. Open your web browser and go to EXACTLY:
+
+   http://localhost:3456
+
+   (This app uses port 3456 on purpose. Port 3000 is often a different project.)
+
+5. Leave Terminal open while you play. To stop the app: click Terminal, press Ctrl+C.
+
+────────────────────────────────────────
+IF SOMETHING FAILS
+────────────────────────────────────────
+• "Address already in use" on 3456 — in Terminal run:
+  npm run dev -- -p 3457
+  Then open http://localhost:3457
+
+• Page won't load — make sure you ran npm run dev:tt and see "Ready".
+
+• Red error on the quiz screen — read the whole message; it usually says key, billing, or try again.

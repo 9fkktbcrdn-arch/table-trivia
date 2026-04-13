@@ -7,4 +7,4 @@ npm install
 npm run dev
 ```
 
-SQL migration: `supabase/migrations/001_initial_schema.sql`
+SQL: run `001_initial_schema.sql` then `002_topic_image_url.sql` in the Supabase SQL editor (order matters).

@@ -18,11 +18,11 @@ function difficultyLabel(d: string | null): string {
   }
 }
 
-function scoreMessage(score: number): string {
-  if (score >= 10) return "Perfect score — legend at the table!";
-  if (score >= 8) return "Outstanding! The whole table is impressed.";
-  if (score >= 6) return "Solid round — seconds, anyone?";
-  if (score >= 4) return "Not bad! A little more gravy next time.";
+function scoreMessage(scoreRatio: number): string {
+  if (scoreRatio >= 0.95) return "Perfect score — legend at the table!";
+  if (scoreRatio >= 0.8) return "Outstanding! The whole table is impressed.";
+  if (scoreRatio >= 0.6) return "Solid round — seconds, anyone?";
+  if (scoreRatio >= 0.4) return "Not bad! A little more gravy next time.";
   return "Tough round — challenge accepted for a rematch?";
 }
 
@@ -30,11 +30,25 @@ function ResultsInner() {
   const router = useRouter();
   const params = useSearchParams();
   const rawScore = params.get("score");
+  const rawPoints = params.get("points");
+  const rawMaxPoints = params.get("maxPoints");
   const topic = params.get("topic");
   const difficulty = params.get("difficulty");
   const score = rawScore != null ? Number.parseInt(rawScore, 10) : NaN;
+  const points = rawPoints != null ? Number.parseInt(rawPoints, 10) : NaN;
+  const maxPoints = rawMaxPoints != null ? Number.parseInt(rawMaxPoints, 10) : NaN;
+  const scoreRatio = !Number.isNaN(points) && !Number.isNaN(maxPoints) && maxPoints > 0 ? points / maxPoints : score / 10;
 
-  if (!topic || Number.isNaN(score) || score < 0 || score > 10) {
+  if (
+    !topic ||
+    Number.isNaN(score) ||
+    score < 0 ||
+    score > 10 ||
+    Number.isNaN(points) ||
+    Number.isNaN(maxPoints) ||
+    points < 0 ||
+    maxPoints <= 0
+  ) {
     return (
       <div className="tt-screen flex min-h-dvh flex-col items-center justify-center gap-4 bg-tt-bg px-4">
         <p className="font-body text-lg text-zinc-400">Nothing to show yet.</p>
@@ -58,9 +72,10 @@ function ResultsInner() {
       >
         <p className="font-stat text-sm uppercase tracking-[0.2em] text-tt-magenta/90">Results</p>
         <h1 className="mt-2 font-stat text-4xl font-bold text-white sm:text-5xl">
-          {score} out of 10! <span aria-hidden>🎉</span>
+          {points} / {maxPoints} pts <span aria-hidden>🎉</span>
         </h1>
-        <p className="mt-4 font-body text-lg leading-relaxed text-zinc-300">{scoreMessage(score)}</p>
+        <p className="mt-2 font-body text-zinc-400">{score} correct out of 10 questions</p>
+        <p className="mt-4 font-body text-lg leading-relaxed text-zinc-300">{scoreMessage(scoreRatio)}</p>
         <p className="mt-2 font-body text-sm text-zinc-500">
           {topic} · {difficultyLabel(difficulty)}
         </p>

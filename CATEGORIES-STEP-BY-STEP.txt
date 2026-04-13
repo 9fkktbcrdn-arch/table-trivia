@@ -1,0 +1,130 @@
+CATEGORIES / TOPICS — STEP BY STEP
+==================================
+
+READ THIS FIRST (30 seconds)
+----------------------------
+In this app, the big tiles on the home screen are “categories.”
+
+• WITHOUT Supabase: you only get “General Trivia” + “Create your own.”
+  The four empty slots stay empty. That is normal.
+
+• WITH Supabase: you ADD category names in the app; they save to the
+  cloud and fill those four slots (first four in your list).
+
+
+═══════════════════════════════════════════════════════════════════
+OPTION A — EASIEST (no database, works today)
+═══════════════════════════════════════════════════════════════════
+
+1. Open Table Trivia in the browser (e.g. http://localhost:3456).
+
+2. Tap “General Trivia” → pick difficulty → play.
+   (Mixed topics, no setup.)
+
+3. OR tap “Create your own” → type anything (e.g. “Harry Potter”) → Start.
+   (One-off quiz; not saved as a tile.)
+
+Done. You do not need Option B unless you want saved tiles.
+
+
+═══════════════════════════════════════════════════════════════════
+OPTION B — SAVED CATEGORIES ON THE HOME SCREEN (Supabase)
+═══════════════════════════════════════════════════════════════════
+
+Do these in order. Pause if any step fails and fix it before the next.
+
+────────────────────────────────────────
+B1 — Create a Supabase project (once)
+────────────────────────────────────────
+
+1. Go to:  https://supabase.com
+2. Sign up or log in.
+3. Click “New project.”
+4. Pick a name, database password, region → Create project.
+5. Wait until the dashboard says the project is ready (can take a minute).
+
+
+────────────────────────────────────────
+B2 — Copy two values into .env.local
+────────────────────────────────────────
+
+1. In Supabase, click the gear: Project Settings (or “Settings”).
+2. Click “API” in the left menu.
+
+3. Find “Project URL” — copy it.
+   In .env.local add or edit this line (paste your URL):
+
+   NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
+
+4. Find “anon” / “public” key under “Project API keys” — copy it.
+   In .env.local add or edit:
+
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOi...long-key...
+
+5. Save .env.local (Cmd+S).
+
+
+────────────────────────────────────────
+B3 — Create the database tables (once)
+────────────────────────────────────────
+
+1. In Supabase left sidebar, click “SQL Editor.”
+2. Click “New query.”
+
+3. On your computer, open this project folder and find:
+   supabase/migrations/001_initial_schema.sql
+   Open the file, copy ALL the text, paste into the Supabase SQL box.
+
+4. Click “Run” (or Run query). You should see success.
+
+5. New query again. Open and copy ALL of:
+   supabase/migrations/002_topic_image_url.sql
+   Paste → Run. Success.
+
+   (If 002 errors because column exists, you can ignore — means you
+   already ran it.)
+
+
+────────────────────────────────────────
+B4 — Restart the app
+────────────────────────────────────────
+
+1. In Terminal where the app runs: Ctrl+C
+2. Run again:
+   cd /Users/ryancary/table-trivia
+   npm run dev:tt
+
+3. Refresh the browser.
+
+
+────────────────────────────────────────
+B5 — Add your categories in the app
+────────────────────────────────────────
+
+1. Open Table Trivia in the browser.
+
+2. Tap the gear icon (top right) — “Topic Manager.”
+
+3. Scroll to “Add topic.”
+   Type a name (e.g. Movies, Science, 90s Music).
+   Tap “Add.”
+
+4. Repeat for more categories (as many as you want).
+
+5. Tap ← to go Home.
+
+6. The FIRST FOUR topics in your list show on the four big tiles.
+   Use ↑ ↓ in Topic Manager to change order.
+
+Optional: “Image URL” is only for a pretty tile background — skip if you want.
+
+
+═══════════════════════════════════════════════════════════════════
+QUICK CHECKLIST
+═══════════════════════════════════════════════════════════════════
+[ ] .env.local has NEXT_PUBLIC_SUPABASE_URL
+[ ] .env.local has NEXT_PUBLIC_SUPABASE_ANON_KEY
+[ ] Ran 001_initial_schema.sql in Supabase
+[ ] Ran 002_topic_image_url.sql in Supabase (or column already exists)
+[ ] Restarted npm run dev:tt after editing .env.local
+[ ] Added topics in Topic Manager (gear) and went back Home

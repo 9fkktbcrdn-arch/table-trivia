@@ -9,19 +9,23 @@ export async function getTopics(): Promise<TopicRow[]> {
     console.error("getTopics", error);
     return [];
   }
-  return (data ?? []) as TopicRow[];
+  return (data ?? []).map((row) => ({
+    ...(row as TopicRow),
+    image_url: (row as TopicRow).image_url ?? null,
+  }));
 }
 
-export async function addTopic(name: string): Promise<TopicRow | null> {
+export async function addTopic(name: string, imageUrl?: string | null): Promise<TopicRow | null> {
   if (!isSupabaseConfigured()) return null;
   const trimmed = name.trim();
   if (!trimmed) return null;
+  const img = imageUrl?.trim() || null;
   const supabase = getSupabaseBrowserClient();
   const { data: maxRow } = await supabase.from("topics").select("sort_order").order("sort_order", { ascending: false }).limit(1).maybeSingle();
   const nextOrder = (maxRow?.sort_order ?? -1) + 1;
   const { data, error } = await supabase
     .from("topics")
-    .insert({ name: trimmed, sort_order: nextOrder })
+    .insert({ name: trimmed, sort_order: nextOrder, image_url: img })
     .select()
     .single();
   if (error) {
@@ -31,12 +35,23 @@ export async function addTopic(name: string): Promise<TopicRow | null> {
   return data as TopicRow;
 }
 
-export async function updateTopic(id: string, name: string): Promise<boolean> {
+export async function updateTopic(
+  id: string,
+  patch: { name?: string; image_url?: string | null },
+): Promise<boolean> {
   if (!isSupabaseConfigured()) return false;
-  const trimmed = name.trim();
-  if (!trimmed) return false;
+  const payload: Record<string, string | null> = {};
+  if (patch.name !== undefined) {
+    const t = patch.name.trim();
+    if (!t) return false;
+    payload.name = t;
+  }
+  if (patch.image_url !== undefined) {
+    payload.image_url = patch.image_url?.trim() ? patch.image_url.trim() : null;
+  }
+  if (Object.keys(payload).length === 0) return false;
   const supabase = getSupabaseBrowserClient();
-  const { error } = await supabase.from("topics").update({ name: trimmed }).eq("id", id);
+  const { error } = await supabase.from("topics").update(payload).eq("id", id);
   if (error) {
     console.error("updateTopic", error);
     return false;

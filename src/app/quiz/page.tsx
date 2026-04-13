@@ -7,8 +7,10 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import { DifficultySelector } from "@/components/DifficultySelector";
 import { QuizLoading } from "@/components/QuizLoading";
 import { QuizQuestion as QuizQuestionView } from "@/components/QuizQuestion";
+import { appendFlaggedQuestion } from "@/lib/flagged-questions";
 import { saveScore } from "@/lib/db";
 import type { QuizQuestion, TriviaDifficulty } from "@/lib/types";
+import { maxPointsForQuestions, pointsForQuestion } from "@/lib/scoring";
 import { useTriviaStore } from "@/store/trivia-store";
 
 function QuizFlow() {
@@ -27,6 +29,9 @@ function QuizFlow() {
   const [selected, setSelected] = useState<number | null>(null);
   const [revealed, setRevealed] = useState(false);
   const [correctTotal, setCorrectTotal] = useState(0);
+  const [pointsTotal, setPointsTotal] = useState(0);
+  const [demoMode, setDemoMode] = useState(false);
+  const [issueReportedForQuestion, setIssueReportedForQuestion] = useState(false);
 
   useEffect(() => {
     if (difficultyParam && ["noob", "normal", "grandmaster"].includes(difficultyParam)) {
@@ -35,6 +40,10 @@ function QuizFlow() {
       setDifficulty(null);
     }
   }, [difficultyParam]);
+
+  useEffect(() => {
+    setIssueReportedForQuestion(false);
+  }, [idx]);
 
   const fetchQuiz = useCallback(async () => {
     if (!topic || !difficulty) return;
@@ -45,6 +54,9 @@ function QuizFlow() {
     setSelected(null);
     setRevealed(false);
     setCorrectTotal(0);
+    setPointsTotal(0);
+    setDemoMode(false);
+    setIssueReportedForQuestion(false);
     void replayNonce;
     try {
       const res = await fetch("/api/generate-quiz", {
@@ -52,9 +64,15 @@ function QuizFlow() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topic, difficulty }),
       });
-      const data = (await res.json()) as { questions?: QuizQuestion[]; error?: string };
+      const data = (await res.json()) as {
+        questions?: QuizQuestion[];
+        error?: string;
+        hint?: string;
+        demoMode?: boolean;
+      };
       if (!res.ok) {
-        setError(data.error ?? "Couldn't generate questions, try again.");
+        const parts = [data.error, data.hint].filter(Boolean);
+        setError(parts.length ? parts.join(" ") : "Couldn't generate questions, try again.");
         return;
       }
       if (!data.questions || data.questions.length !== 10) {
@@ -62,6 +80,7 @@ function QuizFlow() {
         return;
       }
       setQuestions(data.questions);
+      setDemoMode(Boolean(data.demoMode));
     } catch {
       setError("Couldn't generate questions, try again.");
     } finally {
@@ -86,6 +105,9 @@ function QuizFlow() {
     setRevealed(true);
     if (i === questions[idx].correctIndex) {
       setCorrectTotal((c) => c + 1);
+      if (difficulty) {
+        setPointsTotal((p) => p + pointsForQuestion(difficulty, questions[idx].questionDifficulty));
+      }
     }
   };
 
@@ -100,11 +122,12 @@ function QuizFlow() {
     await saveScore({
       topic,
       difficulty,
-      score: correctTotal,
+      score: pointsTotal,
       mode: gameMode,
     });
+    const maxPoints = maxPointsForQuestions(difficulty, questions);
     router.push(
-      `/results?score=${correctTotal}&topic=${encodeURIComponent(topic)}&difficulty=${difficulty}&mode=${gameMode}`,
+      `/results?score=${correctTotal}&points=${pointsTotal}&maxPoints=${maxPoints}&topic=${encodeURIComponent(topic)}&difficulty=${difficulty}&mode=${gameMode}`,
     );
   };
 
@@ -162,6 +185,7 @@ function QuizFlow() {
   }
 
   const q = questions[idx];
+  const perQuestionPoints = difficulty ? pointsForQuestion(difficulty, q.questionDifficulty) : 0;
   const feedback =
     revealed && selected !== null
       ? selected === q.correctIndex
@@ -176,8 +200,18 @@ function QuizFlow() {
           ←
         </Link>
         <p className="truncate font-body text-sm text-zinc-500">{displayTopic}</p>
-        <span className="w-12" />
+        <p className="font-body text-xs text-zinc-500">
+          {pointsTotal} pts
+        </p>
       </div>
+
+      {demoMode && (
+        <p className="mb-3 rounded-xl border border-amber-500/40 bg-amber-950/35 px-3 py-2 font-body text-sm text-amber-100/95">
+          You&apos;re playing <strong>demo questions</strong> (no AI key). Add{" "}
+          <code className="rounded bg-black/30 px-1">ANTHROPIC_API_KEY</code> to{" "}
+          <code className="rounded bg-black/30 px-1">.env.local</code> for topic-specific AI quizzes.
+        </p>
+      )}
 
       <motion.div
         key={idx}
@@ -193,16 +227,33 @@ function QuizFlow() {
           selectedIndex={selected}
           revealed={revealed}
           onAnswer={onPickAnswer}
+          issueReported={issueReportedForQuestion}
+          onReportIssue={() => {
+            if (!topic || !difficulty) return;
+            appendFlaggedQuestion({
+              topic,
+              difficulty,
+              question: q.question,
+              answers: q.answers,
+              correctIndex: q.correctIndex,
+            });
+            setIssueReportedForQuestion(true);
+          }}
         />
 
         {feedback && (
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className={`mt-4 font-stat text-xl font-bold ${feedback === "Nice!" ? "text-tt-lime" : "text-tt-amber"}`}
-          >
-            {feedback}
-          </motion.p>
+          <div className="mt-4">
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className={`font-stat text-xl font-bold ${feedback === "Nice!" ? "text-tt-lime" : "text-tt-amber"}`}
+            >
+              {feedback}
+            </motion.p>
+            <p className="mt-1 font-body text-sm text-zinc-400">
+              {selected === q.correctIndex ? `+${perQuestionPoints} points` : `Worth ${perQuestionPoints} points`}
+            </p>
+          </div>
         )}
 
         {revealed && (
