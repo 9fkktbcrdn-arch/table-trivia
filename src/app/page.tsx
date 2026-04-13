@@ -70,9 +70,7 @@ export default function HomePage() {
           </Link>
           <Link
             href="/settings"
-            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-tt-border/80 bg-tt-surface/90 text-lg text-tt-cyan transition hover:border-tt-cyan/50 hover:bg-tt-surface ${
-              inProgress ? "pointer-events-none opacity-40" : ""
-            }`}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-tt-border/80 bg-tt-surface/90 text-lg text-tt-cyan transition hover:border-tt-cyan/50 hover:bg-tt-surface"
             aria-label="Topic manager"
           >
             ⚙️
@@ -111,6 +109,22 @@ export default function HomePage() {
           <p className="font-body text-sm text-emerald-200">All topics completed. Start a fresh game anytime.</p>
           <button type="button" className="tt-btn-ghost min-h-[40px] px-3" onClick={resetGame}>
             New game
+          </button>
+        </div>
+      ) : null}
+      {inProgress && completedTopics.length < topicNames.length ? (
+        <div className="mx-4 mt-3 flex items-center justify-between rounded-xl border border-amber-500/40 bg-amber-950/25 px-3 py-2 sm:mx-6">
+          <p className="font-body text-sm text-amber-100">
+            {completedTopics.length}/{topicNames.length} topics complete
+          </p>
+          <button
+            type="button"
+            className="tt-btn-ghost min-h-[40px] px-3"
+            onClick={() => {
+              if (confirm("Restart current game? This clears progress.")) resetGame();
+            }}
+          >
+            Restart
           </button>
         </div>
       ) : null}
