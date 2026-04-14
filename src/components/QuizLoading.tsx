@@ -2,12 +2,17 @@
 
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { LOADING_MESSAGES } from "@/lib/trivia-constants";
+import { LOADING_JOKES, LOADING_MESSAGES } from "@/lib/trivia-constants";
 
 export function QuizLoading() {
   const [i, setI] = useState(0);
+  const [jokeIndex, setJokeIndex] = useState(0);
   useEffect(() => {
     const t = setInterval(() => setI((n) => (n + 1) % LOADING_MESSAGES.length), 2200);
+    return () => clearInterval(t);
+  }, []);
+  useEffect(() => {
+    const t = setInterval(() => setJokeIndex((n) => (n + 1) % LOADING_JOKES.length), 5000);
     return () => clearInterval(t);
   }, []);
 
@@ -31,6 +36,14 @@ export function QuizLoading() {
         </motion.span>
       </motion.div>
       <p className="max-w-[280px] text-center font-stat text-lg text-tt-cyan/95">{LOADING_MESSAGES[i]}</p>
+      <motion.p
+        key={jokeIndex}
+        initial={{ opacity: 0, y: 4 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-[320px] text-center font-body text-sm text-zinc-300/95"
+      >
+        {LOADING_JOKES[jokeIndex]}
+      </motion.p>
     </div>
   );
 }

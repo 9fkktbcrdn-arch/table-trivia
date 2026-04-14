@@ -12,7 +12,7 @@ import { saveScore } from "@/lib/db";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import type { QuizQuestion, TriviaDifficulty } from "@/lib/types";
 import { maxPointsForQuestions, pointsForQuestion } from "@/lib/scoring";
-import { EXTRA_CREDIT_LABEL } from "@/lib/trivia-constants";
+import { EXTRA_CREDIT_LABEL, MODERATOR_CORRECT_QUIPS, MODERATOR_WRONG_QUIPS } from "@/lib/trivia-constants";
 import { useTriviaStore } from "@/store/trivia-store";
 
 function QuizFlow() {
@@ -38,6 +38,7 @@ function QuizFlow() {
   const [revealed, setRevealed] = useState(false);
   const [correctTotal, setCorrectTotal] = useState(0);
   const [pointsTotal, setPointsTotal] = useState(0);
+  const [moderatorQuip, setModeratorQuip] = useState<string | null>(null);
   const [demoMode, setDemoMode] = useState(false);
   const [issueReportedForQuestion, setIssueReportedForQuestion] = useState(false);
 
@@ -51,6 +52,7 @@ function QuizFlow() {
 
   useEffect(() => {
     setIssueReportedForQuestion(false);
+    setModeratorQuip(null);
   }, [idx]);
 
   const fetchQuiz = useCallback(async () => {
@@ -63,6 +65,7 @@ function QuizFlow() {
     setRevealed(false);
     setCorrectTotal(0);
     setPointsTotal(0);
+    setModeratorQuip(null);
     setDemoMode(false);
     setIssueReportedForQuestion(false);
     void replayNonce;
@@ -129,6 +132,7 @@ function QuizFlow() {
     setSelected(i);
     setRevealed(true);
     if (i === questions[idx].correctIndex) {
+      setModeratorQuip(MODERATOR_CORRECT_QUIPS[Math.floor(Math.random() * MODERATOR_CORRECT_QUIPS.length)] ?? "Nice!");
       setCorrectTotal((c) => c + 1);
       if (difficulty) {
         const extraCredit = topic.trim().toLowerCase() === EXTRA_CREDIT_LABEL.toLowerCase();
@@ -136,6 +140,8 @@ function QuizFlow() {
           p + pointsForQuestion(difficulty, questions[idx].questionDifficulty, { extraCredit }),
         );
       }
+    } else {
+      setModeratorQuip(MODERATOR_WRONG_QUIPS[Math.floor(Math.random() * MODERATOR_WRONG_QUIPS.length)] ?? "Not quite!");
     }
   };
 
@@ -244,8 +250,8 @@ function QuizFlow() {
   const feedback =
     revealed && selected !== null
       ? selected === q.correctIndex
-        ? "Nice!"
-        : "Not quite!"
+        ? (moderatorQuip ?? "Nice!")
+        : (moderatorQuip ?? "Not quite!")
       : null;
 
   return (
