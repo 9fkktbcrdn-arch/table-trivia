@@ -12,6 +12,11 @@ body {
   padding: 0;
   overscroll-behavior: none;
   touch-action: manipulation;
+  background:
+    radial-gradient(120% 95% at 50% -10%, rgba(177, 140, 255, 0.25), transparent 50%),
+    radial-gradient(95% 70% at 50% 110%, rgba(255, 210, 77, 0.2), transparent 55%),
+    linear-gradient(180deg, #060a1f 0%, #081241 45%, #060a1f 100%);
+  color: #f5e6c8;
 }
 
 * {
@@ -24,14 +29,14 @@ body {
   }
 
   .tt-btn-primary {
-    @apply rounded-xl border-2 border-tt-cyan/70 bg-gradient-to-b from-teal-600/90 to-cyan-900/95 px-5 py-2 font-stat text-lg font-bold text-white shadow-[0_10px_26px_rgba(34,211,238,0.2)] transition hover:border-tt-lime/80 hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-tt-cyan/60 focus-visible:ring-offset-2 focus-visible:ring-offset-tt-bg active:scale-[0.99] disabled:opacity-50;
+    @apply rounded-xl border-2 border-tt-amber/85 bg-gradient-to-b from-[#254ed9] via-[#173597] to-[#11256c] px-5 py-2 font-stat text-lg font-bold text-white shadow-[0_12px_28px_rgba(10,20,70,0.55)] transition hover:border-tt-cyan hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-tt-amber/70 focus-visible:ring-offset-2 focus-visible:ring-offset-tt-bg active:scale-[0.99] disabled:opacity-50;
   }
 
   .tt-btn-secondary {
-    @apply rounded-xl border-2 border-tt-border bg-tt-surface px-5 py-2 font-stat text-lg font-semibold text-parchment transition hover:border-tt-magenta/50 hover:bg-tt-surface/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-tt-cyan/45 focus-visible:ring-offset-2 focus-visible:ring-offset-tt-bg active:scale-[0.99];
+    @apply rounded-xl border-2 border-tt-border bg-gradient-to-b from-[#1a358f] to-[#10296f] px-5 py-2 font-stat text-lg font-semibold text-parchment transition hover:border-tt-cyan/70 hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-tt-cyan/50 focus-visible:ring-offset-2 focus-visible:ring-offset-tt-bg active:scale-[0.99];
   }
 
   .tt-btn-ghost {
-    @apply rounded-xl border border-transparent px-2 py-1 font-stat text-lg text-tt-cyan transition hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-tt-cyan/45 focus-visible:ring-offset-2 focus-visible:ring-offset-tt-bg;
+    @apply rounded-xl border border-transparent px-2 py-1 font-stat text-lg text-tt-amber transition hover:bg-white/5 hover:text-tt-cyan focus:outline-none focus-visible:ring-2 focus-visible:ring-tt-cyan/45 focus-visible:ring-offset-2 focus-visible:ring-offset-tt-bg;
   }
 }

@@ -6,13 +6,13 @@ const config: Config = {
     extend: {
       colors: {
         parchment: "#F5E6C8",
-        "tt-bg": "#0a0e17",
-        "tt-surface": "#12182a",
-        "tt-border": "#2a3f6b",
-        "tt-cyan": "#22d3ee",
-        "tt-magenta": "#e879f9",
-        "tt-lime": "#a3e635",
-        "tt-amber": "#fbbf24",
+        "tt-bg": "#060a1f",
+        "tt-surface": "#0e1f5a",
+        "tt-border": "#3f67d8",
+        "tt-cyan": "#67d5ff",
+        "tt-magenta": "#b18cff",
+        "tt-lime": "#8bf58d",
+        "tt-amber": "#ffd24d",
         "tt-rose": "#fb7185",
       },
       fontFamily: {

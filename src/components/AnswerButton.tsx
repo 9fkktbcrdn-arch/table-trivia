@@ -15,12 +15,12 @@ export function AnswerButton({ label, index, onClick, state, disabled }: AnswerB
 
   const styles =
     state === "correct"
-      ? "border-tt-lime bg-tt-lime/20 text-white shadow-[0_0_20px_rgba(163,230,53,0.35)]"
+      ? "border-tt-lime bg-tt-lime/20 text-white shadow-[0_0_24px_rgba(139,245,141,0.45)]"
       : state === "incorrect"
-        ? "border-tt-rose bg-tt-rose/15 text-parchment/90 shadow-[0_8px_18px_rgba(244,63,94,0.18)]"
+        ? "border-tt-rose bg-tt-rose/20 text-parchment/90 shadow-[0_10px_22px_rgba(244,63,94,0.24)]"
         : state === "revealed-correct"
-          ? "border-tt-lime/90 bg-tt-lime/25 text-white shadow-[0_8px_18px_rgba(163,230,53,0.2)]"
-          : "border-tt-border bg-tt-surface/90 text-parchment hover:-translate-y-0.5 hover:border-tt-cyan/60 hover:bg-tt-surface hover:shadow-[0_10px_20px_rgba(15,23,42,0.35)]";
+          ? "border-tt-lime/90 bg-tt-lime/25 text-white shadow-[0_10px_22px_rgba(139,245,141,0.3)]"
+          : "border-tt-border bg-gradient-to-b from-[#1b3bb3] to-[#112b7f] text-parchment hover:-translate-y-0.5 hover:border-tt-amber/80 hover:brightness-110 hover:shadow-[0_12px_24px_rgba(12,30,100,0.45)]";
 
   return (
     <button
@@ -29,7 +29,7 @@ export function AnswerButton({ label, index, onClick, state, disabled }: AnswerB
       onClick={onClick}
       className={`${base} ${styles}`}
     >
-      <span className="font-stat text-tt-cyan/90">{letter}.</span>{" "}
+      <span className="font-stat text-tt-amber">{letter}.</span>{" "}
       <span className="text-parchment">{label}</span>
     </button>
   );

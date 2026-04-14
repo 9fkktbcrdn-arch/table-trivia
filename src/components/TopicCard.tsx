@@ -36,7 +36,7 @@ export function TopicCard({ title, subtitle, onClick, variant = "topic", disable
           ? "cursor-default border-tt-border/50 bg-tt-surface/30 text-zinc-500"
           : showImage
             ? "border-white/20 shadow-[0_10px_22px_rgba(0,0,0,0.25)] active:scale-[0.98] active:border-white/30"
-            : "border-tt-border/80 bg-gradient-to-b from-tt-surface to-tt-bg/95 text-parchment hover:-translate-y-0.5 hover:border-tt-cyan/50 hover:shadow-[0_12px_24px_rgba(34,211,238,0.14)] active:scale-[0.98] active:border-tt-cyan/40",
+            : "border-tt-border/90 bg-gradient-to-b from-[#1b3dbe] via-[#142f95] to-[#0a1b56] text-parchment shadow-[0_10px_20px_rgba(7,14,50,0.5)] hover:-translate-y-0.5 hover:border-tt-amber/80 hover:shadow-[0_14px_28px_rgba(14,30,100,0.55)] active:scale-[0.98] active:border-tt-cyan/50",
       ]
         .filter(Boolean)
         .join(" ")}
