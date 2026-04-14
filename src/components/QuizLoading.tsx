@@ -6,13 +6,22 @@ import { LOADING_JOKES, LOADING_MESSAGES } from "@/lib/trivia-constants";
 
 export function QuizLoading() {
   const [i, setI] = useState(0);
-  const [jokeIndex, setJokeIndex] = useState(0);
+  const [jokeIndex, setJokeIndex] = useState(() => Math.floor(Math.random() * LOADING_JOKES.length));
   useEffect(() => {
     const t = setInterval(() => setI((n) => (n + 1) % LOADING_MESSAGES.length), 2200);
     return () => clearInterval(t);
   }, []);
   useEffect(() => {
-    const t = setInterval(() => setJokeIndex((n) => (n + 1) % LOADING_JOKES.length), 5000);
+    const t = setInterval(() => {
+      setJokeIndex((current) => {
+        if (LOADING_JOKES.length <= 1) return current;
+        let next = current;
+        while (next === current) {
+          next = Math.floor(Math.random() * LOADING_JOKES.length);
+        }
+        return next;
+      });
+    }, 5000);
     return () => clearInterval(t);
   }, []);
 
