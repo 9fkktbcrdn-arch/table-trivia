@@ -1,4 +1,5 @@
 -- Append-only AI usage for token/cost totals (shared across devices via anon key).
+-- Re-running is safe: policy is dropped before recreate.
 
 create table if not exists public.usage_events (
   id uuid primary key default gen_random_uuid(),
@@ -12,6 +13,8 @@ create table if not exists public.usage_events (
 create index if not exists usage_events_created_at_idx on public.usage_events (created_at desc);
 
 alter table public.usage_events enable row level security;
+
+drop policy if exists "usage_events open" on public.usage_events;
 
 create policy "usage_events open" on public.usage_events for all using (true) with check (true);
 

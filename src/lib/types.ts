@@ -27,6 +27,8 @@ export interface QuizQuestion {
   answers: [string, string, string, string];
   correctIndex: 0 | 1 | 2 | 3;
   questionDifficulty: QuestionDifficulty;
+  /** Why the correct option is right; shown after a wrong guess. */
+  explanation: string;
 }
 
 export interface GenerateQuizPayload {

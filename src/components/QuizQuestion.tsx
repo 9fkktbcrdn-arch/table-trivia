@@ -59,6 +59,20 @@ export function QuizQuestion({
         })}
       </div>
 
+      {revealed &&
+      selectedIndex !== null &&
+      selectedIndex !== question.correctIndex &&
+      question.explanation.trim() ? (
+        <div
+          className="rounded-xl border border-tt-cyan/25 bg-tt-cyan/5 px-4 py-3"
+          role="note"
+          aria-live="polite"
+        >
+          <p className="font-stat text-xs font-semibold uppercase tracking-wider text-tt-cyan/90">Why it&apos;s right</p>
+          <p className="mt-1.5 font-body text-sm leading-relaxed text-zinc-200">{question.explanation}</p>
+        </div>
+      ) : null}
+
       {onReportIssue ? (
         <div className="mt-2 border-t border-tt-border/40 pt-3">
           <button

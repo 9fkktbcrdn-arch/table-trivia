@@ -96,6 +96,7 @@ Quality (do this before you output):
 - The four answers must be distinct strings (no duplicates).
 - Wrong answers must be plausible but definitively incorrect for the stem you wrote.
 - Include a "questionDifficulty" field for each item with value "easy" | "medium" | "hard".
+- Include an "explanation" string (1–3 short sentences) that states the fact or reasoning proving the answer at "correctIndex" is the right one—no hedging, no revealing other options by name.
 
 Rules:
 - Each question has exactly 4 answer choices (strings).
@@ -105,7 +106,7 @@ Rules:
 - Return ONLY a JSON array (no markdown fences, no commentary, no preamble). The JSON must parse with JSON.parse.
 
 Each array element must be an object with this shape:
-{ "question": string, "answers": [string, string, string, string], "correctIndex": number, "questionDifficulty": "easy" | "medium" | "hard" }
+{ "question": string, "answers": [string, string, string, string], "correctIndex": number, "questionDifficulty": "easy" | "medium" | "hard", "explanation": string }
 
 The "answers" array must always have length 4.`;
 }
@@ -131,6 +132,7 @@ function isValidQuestion(item: unknown): item is QuizQuestion {
   if (typeof o.correctIndex !== "number" || !Number.isInteger(o.correctIndex)) return false;
   if (o.correctIndex < 0 || o.correctIndex > 3) return false;
   if (!["easy", "medium", "hard"].includes((o.questionDifficulty as string) ?? "")) return false;
+  if (typeof o.explanation !== "string" || o.explanation.trim().length < 12) return false;
   return true;
 }
 
@@ -147,6 +149,7 @@ function shuffleQuestion(q: QuizQuestion): QuizQuestion {
     answers: answers as [string, string, string, string],
     correctIndex,
     questionDifficulty: q.questionDifficulty,
+    explanation: q.explanation,
   };
 }
 

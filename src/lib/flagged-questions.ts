@@ -6,6 +6,7 @@ export type FlaggedQuestionEntry = {
   question: string;
   answers: [string, string, string, string];
   correctIndex: 0 | 1 | 2 | 3;
+  explanation?: string;
   flaggedAt: string;
 };
 

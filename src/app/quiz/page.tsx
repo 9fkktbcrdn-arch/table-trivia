@@ -288,6 +288,7 @@ function QuizFlow() {
               question: q.question,
               answers: q.answers,
               correctIndex: q.correctIndex,
+              explanation: q.explanation,
             });
             setIssueReportedForQuestion(true);
           }}
