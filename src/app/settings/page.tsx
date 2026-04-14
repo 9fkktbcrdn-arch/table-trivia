@@ -8,6 +8,8 @@ import type { TopicRow } from "@/lib/types";
 import { useTriviaStore } from "@/store/trivia-store";
 
 const MAX_TOPICS = 5;
+const RANDOM_TARGET_STORAGE_KEY = "table-trivia-random-target";
+type RandomTarget = "gifted12" | "middle-school";
 
 export default function SettingsPage() {
   const [topics, setTopics] = useState<TopicRow[]>([]);
@@ -15,6 +17,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [generatingKind, setGeneratingKind] = useState<null | "theme" | "gifted">(null);
   const [topicGeneratorMode, setTopicGeneratorMode] = useState<"theme" | "random">("random");
+  const [randomTarget, setRandomTarget] = useState<RandomTarget>("gifted12");
   const [notice, setNotice] = useState<string | null>(null);
   const [themeSeed, setThemeSeed] = useState("");
   const [cloudUsage, setCloudUsage] = useState<UsageTotals | null>(null);
@@ -54,6 +57,14 @@ export default function SettingsPage() {
   useEffect(() => {
     void refreshCloudUsage();
   }, [refreshCloudUsage]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const raw = window.localStorage.getItem(RANDOM_TARGET_STORAGE_KEY);
+    if (raw === "middle-school" || raw === "gifted12") {
+      setRandomTarget(raw);
+    }
+  }, []);
 
   const supabaseOk = isSupabaseConfigured();
   const inProgress = useTriviaStore((s) => s.inProgress);
@@ -142,7 +153,14 @@ export default function SettingsPage() {
   };
 
   const onRandomGiftedTopics = async () => {
-    if (!confirm("Replace your current topics with 5 random categories for a bright 12-year-old?")) return;
+    if (
+      !confirm(
+        randomTarget === "gifted12"
+          ? "Replace your current topics with 5 random categories for a bright 12-year-old?"
+          : "Replace your current topics with 5 random middle-school categories?",
+      )
+    )
+      return;
     setGeneratingKind("gifted");
     setSaving(true);
     setNotice(null);
@@ -150,7 +168,7 @@ export default function SettingsPage() {
       const res = await fetch("/api/generate-topics", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ gifted12: true }),
+        body: JSON.stringify({ randomTarget }),
       });
       const data = (await res.json()) as {
         topics?: string[];
@@ -164,7 +182,12 @@ export default function SettingsPage() {
         setNotice(data.error ?? "Couldn't generate topics right now.");
         return;
       }
-      await applyGeneratedTopics(data, "Topics updated: 5 random gifted-12 categories.");
+      await applyGeneratedTopics(
+        data,
+        randomTarget === "gifted12"
+          ? "Topics updated: 5 random gifted-12 categories."
+          : "Topics updated: 5 random middle-school categories.",
+      );
     } catch {
       setNotice("Couldn't generate topics right now.");
     } finally {
@@ -273,12 +296,9 @@ export default function SettingsPage() {
                   : "border-tt-border/80 bg-tt-bg/70 text-zinc-300 hover:border-tt-cyan/40"
               }`}
               disabled={saving || generatingKind !== null || inProgress}
-              onClick={() => {
-                setTopicGeneratorMode("random");
-                void onRandomGiftedTopics();
-              }}
+              onClick={() => setTopicGeneratorMode("random")}
             >
-              {generatingKind === "gifted" ? "Generating..." : "Random"}
+              Random
             </button>
           </div>
 
@@ -296,17 +316,41 @@ export default function SettingsPage() {
               </label>
               <button
                 type="button"
-                className="tt-btn-ghost mt-2 min-h-[44px] w-full sm:w-auto sm:px-6"
+                className="tt-btn-primary mt-3 min-h-[44px] w-full sm:mx-auto sm:block sm:w-[220px]"
                 disabled={saving || generatingKind !== null || inProgress}
                 onClick={() => void onGenerateThemeTopics()}
               >
-                {generatingKind === "theme" ? "Generating..." : "Generate from Theme"}
+                {generatingKind === "theme" ? "Generating..." : "Generate"}
               </button>
             </div>
           ) : (
-            <p className="mt-3 font-body text-xs text-zinc-400">
-              Random mode generates 5 categories tailored for a very gifted 12-year-old.
-            </p>
+            <div className="mt-3">
+              <div className="flex items-center justify-between gap-2 rounded-lg border border-tt-border/70 bg-tt-bg/40 px-3 py-2">
+                <p className="font-body text-xs text-zinc-400">Aimed for</p>
+                <button
+                  type="button"
+                  className="rounded-md border border-tt-border/80 bg-tt-surface/70 px-2 py-1 font-stat text-[11px] uppercase tracking-wide text-zinc-200 hover:border-tt-cyan/60"
+                  disabled={saving || generatingKind !== null || inProgress}
+                  onClick={() => {
+                    const next: RandomTarget = randomTarget === "gifted12" ? "middle-school" : "gifted12";
+                    setRandomTarget(next);
+                    if (typeof window !== "undefined") {
+                      window.localStorage.setItem(RANDOM_TARGET_STORAGE_KEY, next);
+                    }
+                  }}
+                >
+                  {randomTarget === "gifted12" ? "Gifted 12" : "Middle School"}
+                </button>
+              </div>
+              <button
+                type="button"
+                className="tt-btn-primary mt-3 min-h-[44px] w-full sm:mx-auto sm:block sm:w-[220px]"
+                disabled={saving || generatingKind !== null || inProgress}
+                onClick={() => void onRandomGiftedTopics()}
+              >
+                {generatingKind === "gifted" ? "Generating..." : "Generate"}
+              </button>
+            </div>
           )}
         </div>
       </div>

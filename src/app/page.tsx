@@ -59,7 +59,7 @@ export default function HomePage() {
     <div className="tt-screen relative flex min-h-dvh flex-col bg-tt-bg bg-[radial-gradient(ellipse_120%_80%_at_50%_-25%,rgba(177,140,255,0.26),transparent),radial-gradient(ellipse_90%_50%_at_50%_120%,rgba(255,210,77,0.14),transparent)]">
       <header className="flex shrink-0 items-center justify-between gap-4 border-b border-tt-amber/30 bg-tt-surface/45 px-4 py-4 backdrop-blur-sm sm:px-6">
         <div className="min-w-0">
-          <h1 className="font-stat text-2xl font-bold tracking-tight text-tt-amber sm:text-3xl">Table Trivia</h1>
+          <h1 className="font-stat text-2xl font-bold tracking-tight text-tt-amber sm:text-3xl">Quiz Monster</h1>
           <p className="mt-0.5 font-body text-sm text-zinc-500 sm:text-base">
             {inProgress ? `Game in progress for ${playerName}. Finish all topics.` : "Pick a topic to start a round."}
           </p>

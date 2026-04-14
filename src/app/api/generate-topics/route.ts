@@ -29,6 +29,16 @@ const FALLBACK_GIFTED12 = [
   "Programming Concepts",
 ] as const;
 
+const FALLBACK_MIDDLE_SCHOOL = [
+  "Inventions & Innovators",
+  "Earth & Climate",
+  "Ancient History",
+  "Animals & Adaptations",
+  "Coding & Games",
+] as const;
+
+type RandomTarget = "gifted12" | "middle-school";
+
 function parseTopicsJson(text: string): string[] {
   const trimmed = text.trim();
   const start = trimmed.indexOf("[");
@@ -79,30 +89,55 @@ Example format:
 ["Orbital Mechanics","Logic & Riddles","Ancient Civilizations","Mythology","How Computers Work"]`;
 }
 
+function promptMiddleSchool(): string {
+  return `Generate exactly 5 distinct quiz category names for a curious middle-school learner (roughly ages 11-14): challenging but approachable, broad and fun.
+
+Rules:
+- Each category must be broad enough for 10 trivia questions.
+- Use five clearly different domains (no near-duplicates).
+- Include a balanced mix like science, world history, geography, inventions, technology, language, arts, or nature.
+- Keep each topic 1-4 words.
+- Do not include "Extra Credit".
+- Return ONLY a JSON array of 5 strings, no markdown or extra text.
+
+Example format:
+["Inventors & Inventions","World Geography","Ancient History","Space Science","Digital Technology"]`;
+}
+
 export async function POST(req: Request) {
-  let body: { theme?: unknown; gifted12?: unknown };
+  let body: { theme?: unknown; gifted12?: unknown; randomTarget?: unknown };
   try {
-    body = (await req.json()) as { theme?: unknown; gifted12?: unknown };
+    body = (await req.json()) as { theme?: unknown; gifted12?: unknown; randomTarget?: unknown };
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const gifted12 = body.gifted12 === true;
+  const randomTarget: RandomTarget =
+    body.randomTarget === "middle-school" ? "middle-school" : "gifted12";
+  const gifted12 = body.gifted12 === true || (body.randomTarget !== undefined && randomTarget === "gifted12");
   const theme = typeof body.theme === "string" ? body.theme.trim() : "";
 
-  if (!gifted12 && !theme) {
-    return NextResponse.json({ error: 'Send { theme: "..." } or { gifted12: true }.' }, { status: 400 });
+  const hasRandomTarget = body.randomTarget === "gifted12" || body.randomTarget === "middle-school";
+  if (!gifted12 && !hasRandomTarget && !theme) {
+    return NextResponse.json(
+      { error: 'Send { theme: "..." } or random mode ({ randomTarget: "gifted12" | "middle-school" }).' },
+      { status: 400 },
+    );
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
-  const userPrompt = gifted12 ? promptGifted12() : prompt(theme);
-  const fallbackTopics = gifted12 ? [...FALLBACK_GIFTED12] : fallbackFromTheme(theme);
+  const userPrompt = gifted12 ? promptGifted12() : body.randomTarget === "middle-school" ? promptMiddleSchool() : prompt(theme);
+  const fallbackTopics = gifted12
+    ? [...FALLBACK_GIFTED12]
+    : body.randomTarget === "middle-school"
+      ? [...FALLBACK_MIDDLE_SCHOOL]
+      : fallbackFromTheme(theme);
 
   if (!apiKey) {
     return NextResponse.json({
       topics: fallbackTopics,
       demoMode: true,
-      ...(gifted12 ? { gifted12: true } : { theme }),
+      ...(body.randomTarget !== undefined ? { randomTarget } : gifted12 ? { gifted12: true } : { theme }),
     });
   }
 
@@ -134,7 +169,7 @@ export async function POST(req: Request) {
         inputTokens,
         outputTokens,
         estimatedCostUsd,
-        ...(gifted12 ? { gifted12: true } : { theme }),
+        ...(body.randomTarget !== undefined ? { randomTarget } : gifted12 ? { gifted12: true } : { theme }),
       });
     } catch (e) {
       console.warn(`[generate-topics] model ${model} failed`, e);
@@ -146,7 +181,7 @@ export async function POST(req: Request) {
       topics: fallbackTopics,
       error: "Fell back to default topics because generation failed.",
       demoMode: true,
-      ...(gifted12 ? { gifted12: true } : { theme }),
+      ...(body.randomTarget !== undefined ? { randomTarget } : gifted12 ? { gifted12: true } : { theme }),
     },
     { status: 200 },
   );
