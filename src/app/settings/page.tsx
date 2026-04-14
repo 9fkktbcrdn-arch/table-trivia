@@ -2,15 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import {
-  addTopic,
-  clearUsageEvents,
-  deleteTopic,
-  getTopics,
-  getUsageTotals,
-  updateTopic,
-  type UsageTotals,
-} from "@/lib/db";
+import { addTopic, clearUsageEvents, deleteTopic, getTopics, getUsageTotals, updateTopic, type UsageTotals } from "@/lib/db";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import type { TopicRow } from "@/lib/types";
 import { useTriviaStore } from "@/store/trivia-store";
@@ -20,8 +12,6 @@ const MAX_TOPICS = 5;
 export default function SettingsPage() {
   const [topics, setTopics] = useState<TopicRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [newName, setNewName] = useState("");
-  const [newImageUrl, setNewImageUrl] = useState("");
   const [saving, setSaving] = useState(false);
   const [generatingKind, setGeneratingKind] = useState<null | "theme" | "gifted">(null);
   const [topicGeneratorMode, setTopicGeneratorMode] = useState<"theme" | "random">("random");
@@ -80,36 +70,10 @@ export default function SettingsPage() {
     setSaving(false);
   };
 
-  const onImageUrlBlur = async (id: string, previousUrl: string | null, value: string) => {
-    const next = value.trim() || null;
-    const prev = previousUrl?.trim() || null;
-    if (next === prev) return;
-    setSaving(true);
-    await updateTopic(id, { image_url: next });
-    await load();
-    setSaving(false);
-  };
-
   const onDelete = async (id: string) => {
     if (!confirm("Delete this topic?")) return;
     setSaving(true);
     await deleteTopic(id);
-    await load();
-    setSaving(false);
-  };
-
-  const onAdd = async () => {
-    const n = newName.trim();
-    if (!n) return;
-    if (topics.length >= MAX_TOPICS) {
-      setNotice(`You already have ${MAX_TOPICS} topics. Delete one or use Randomize 5.`);
-      return;
-    }
-    setSaving(true);
-    setNotice(null);
-    await addTopic(n, newImageUrl.trim() || null);
-    setNewName("");
-    setNewImageUrl("");
     await load();
     setSaving(false);
   };
@@ -263,15 +227,6 @@ export default function SettingsPage() {
                 className="min-h-[48px] w-full rounded-xl border border-tt-border bg-tt-bg px-3 font-body text-lg text-white outline-none focus:border-tt-cyan/60"
                 aria-label="Topic name"
               />
-              <input
-                key={`img-${t.id}-${t.image_url ?? ""}`}
-                defaultValue={t.image_url ?? ""}
-                disabled={saving || inProgress}
-                onBlur={(e) => void onImageUrlBlur(t.id, t.image_url, e.target.value)}
-                placeholder="Image URL (optional) — paste a direct link to a .jpg or .png"
-                className="min-h-[44px] w-full rounded-xl border border-tt-border/80 bg-tt-bg/80 px-3 font-body text-sm text-white outline-none placeholder:text-zinc-600 focus:border-tt-cyan/50"
-                aria-label="Topic image URL"
-              />
               <div className="flex shrink-0 flex-wrap gap-2">
                 <button
                   type="button"
@@ -289,36 +244,11 @@ export default function SettingsPage() {
 
       <div className="mt-6 rounded-2xl border border-dashed border-tt-border/80 bg-tt-bg/80 p-4">
         <p className="font-stat text-sm font-semibold uppercase tracking-wide text-tt-cyan/90">
-          Topic editing ({topics.length}/{MAX_TOPICS})
+          Topic generator
         </p>
         <p className="mt-1 font-body text-xs text-zinc-500">
-          For tile art, use a <strong>direct image link</strong> (ends in .jpg / .png / .webp or a CDN URL that shows only the image). Run the SQL migration{" "}
-          <code className="text-zinc-400">002_topic_image_url.sql</code> in Supabase if you haven&apos;t yet.
+          Edit topic names directly in the text boxes above, or generate a fresh set below.
         </p>
-        <input
-          className="mt-3 min-h-[48px] w-full rounded-xl border border-tt-border bg-tt-surface px-3 font-body text-lg text-white outline-none focus:border-tt-cyan/60"
-          placeholder="Topic name, e.g. Liverpool FC"
-          value={newName}
-          disabled={saving || inProgress || topics.length >= MAX_TOPICS}
-          onChange={(e) => setNewName(e.target.value)}
-        />
-        <input
-          className="mt-2 min-h-[44px] w-full rounded-xl border border-tt-border/80 bg-tt-bg/80 px-3 font-body text-sm text-white outline-none placeholder:text-zinc-600 focus:border-tt-cyan/50"
-          placeholder="Optional image URL for the home tile"
-          value={newImageUrl}
-          disabled={saving || inProgress || topics.length >= MAX_TOPICS}
-          onChange={(e) => setNewImageUrl(e.target.value)}
-        />
-        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-          <button
-            type="button"
-            className="tt-btn-primary min-h-[48px] w-full sm:w-auto sm:px-8"
-            disabled={saving || inProgress || topics.length >= MAX_TOPICS}
-            onClick={() => void onAdd()}
-          >
-            Add
-          </button>
-        </div>
 
         <div className="mt-3 rounded-xl border border-tt-border/80 bg-tt-surface/40 p-3">
           <p className="font-stat text-xs uppercase tracking-wide text-zinc-400">Generate 5 topics</p>
