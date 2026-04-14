@@ -13,6 +13,7 @@ interface QuizQuestionProps {
   /** Optional: lightweight QA — user flags a bad question (handled by parent). */
   onReportIssue?: () => void;
   issueReported?: boolean;
+  extraCredit?: boolean;
 }
 
 export function QuizQuestion({
@@ -24,14 +25,18 @@ export function QuizQuestion({
   onAnswer,
   onReportIssue,
   issueReported,
+  extraCredit,
 }: QuizQuestionProps) {
-  const label = question.questionDifficulty === "easy" ? "Easy" : question.questionDifficulty === "medium" ? "Medium" : "Hard";
+  const difficultyLabel =
+    question.questionDifficulty === "easy" ? "Easy" : question.questionDifficulty === "medium" ? "Medium" : "Hard";
   return (
     <div className="flex w-full max-w-xl flex-col gap-6">
       <p className="font-stat text-sm font-semibold uppercase tracking-widest text-tt-cyan/90">
         Question {index + 1} of {total}
       </p>
-      <p className="font-body text-xs uppercase tracking-wider text-zinc-500">{label}</p>
+      <p className="font-body text-xs uppercase tracking-wider text-zinc-500">
+        {extraCredit ? `Extra Credit · ${difficultyLabel}` : difficultyLabel}
+      </p>
       <h2 className="font-stat text-xl font-bold leading-snug text-white sm:text-2xl">{question.question}</h2>
       <div className="grid grid-cols-1 gap-3">
         {question.answers.map((label, i) => {

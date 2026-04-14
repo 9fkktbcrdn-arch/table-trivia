@@ -2,7 +2,16 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { addTopic, deleteTopic, getTopics, reorderTopics, updateTopic } from "@/lib/db";
+import {
+  addTopic,
+  clearUsageEvents,
+  deleteTopic,
+  getTopics,
+  getUsageTotals,
+  reorderTopics,
+  updateTopic,
+  type UsageTotals,
+} from "@/lib/db";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import type { TopicRow } from "@/lib/types";
 import { useTriviaStore } from "@/store/trivia-store";
@@ -15,14 +24,26 @@ export default function SettingsPage() {
   const [newName, setNewName] = useState("");
   const [newImageUrl, setNewImageUrl] = useState("");
   const [saving, setSaving] = useState(false);
-  const [generating, setGenerating] = useState(false);
+  const [generatingKind, setGeneratingKind] = useState<null | "theme" | "gifted">(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [themeSeed, setThemeSeed] = useState("");
+  const [cloudUsage, setCloudUsage] = useState<UsageTotals | null>(null);
+  const [usageLoading, setUsageLoading] = useState(() => isSupabaseConfigured());
 
   const load = useCallback(async () => {
     setLoading(true);
     setTopics(await getTopics());
     setLoading(false);
+  }, []);
+
+  const refreshCloudUsage = useCallback(async () => {
+    if (!isSupabaseConfigured()) return;
+    setUsageLoading(true);
+    try {
+      setCloudUsage(await getUsageTotals());
+    } finally {
+      setUsageLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -39,6 +60,10 @@ export default function SettingsPage() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    void refreshCloudUsage();
+  }, [refreshCloudUsage]);
 
   const supabaseOk = isSupabaseConfigured();
   const inProgress = useTriviaStore((s) => s.inProgress);
@@ -104,14 +129,40 @@ export default function SettingsPage() {
     setSaving(false);
   };
 
+  const applyGeneratedTopics = async (
+    data: {
+      topics?: string[];
+      demoMode?: boolean;
+      inputTokens?: number;
+      outputTokens?: number;
+      estimatedCostUsd?: number;
+    },
+    successNotice: string,
+  ) => {
+    if (!data.topics || data.topics.length !== MAX_TOPICS) {
+      setNotice("Couldn't generate topics right now.");
+      return;
+    }
+    if (!data.demoMode && !isSupabaseConfigured()) {
+      addUsage(data.inputTokens ?? 0, data.outputTokens ?? 0, data.estimatedCostUsd ?? 0);
+    }
+    await Promise.all(topics.map((t) => deleteTopic(t.id)));
+    for (const name of data.topics) {
+      await addTopic(name);
+    }
+    await load();
+    await refreshCloudUsage();
+    setNotice(successNotice);
+  };
+
   const onRandomizeTopics = async () => {
     const theme = themeSeed.trim();
     if (!theme) {
       setNotice("Enter a theme first (example: Space, 90s, Animals).");
       return;
     }
-    if (!confirm(`Replace your current topics with 5 new random ones?`)) return;
-    setGenerating(true);
+    if (!confirm(`Replace your current topics with 5 new ones from that theme?`)) return;
+    setGeneratingKind("theme");
     setSaving(true);
     setNotice(null);
     try {
@@ -132,21 +183,43 @@ export default function SettingsPage() {
         setNotice(data.error ?? "Couldn't generate topics right now.");
         return;
       }
-      if (!data.demoMode) {
-        addUsage(data.inputTokens ?? 0, data.outputTokens ?? 0, data.estimatedCostUsd ?? 0);
-      }
-
-      // Replace all saved topics so home always shows exactly these five.
-      await Promise.all(topics.map((t) => deleteTopic(t.id)));
-      for (const name of data.topics) {
-        await addTopic(name);
-      }
-      await load();
-      setNotice(`Topics updated from theme: "${theme}".`);
+      await applyGeneratedTopics(data, `Topics updated from theme: "${theme}".`);
     } catch {
       setNotice("Couldn't generate topics right now.");
     } finally {
-      setGenerating(false);
+      setGeneratingKind(null);
+      setSaving(false);
+    }
+  };
+
+  const onRandomGiftedTopics = async () => {
+    if (!confirm("Replace your current topics with 5 random categories for a bright 12-year-old?")) return;
+    setGeneratingKind("gifted");
+    setSaving(true);
+    setNotice(null);
+    try {
+      const res = await fetch("/api/generate-topics", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gifted12: true }),
+      });
+      const data = (await res.json()) as {
+        topics?: string[];
+        error?: string;
+        demoMode?: boolean;
+        inputTokens?: number;
+        outputTokens?: number;
+        estimatedCostUsd?: number;
+      };
+      if (!res.ok || !data.topics || data.topics.length !== MAX_TOPICS) {
+        setNotice(data.error ?? "Couldn't generate topics right now.");
+        return;
+      }
+      await applyGeneratedTopics(data, "Topics updated: 5 random gifted-12 categories.");
+    } catch {
+      setNotice("Couldn't generate topics right now.");
+    } finally {
+      setGeneratingKind(null);
       setSaving(false);
     }
   };
@@ -196,16 +269,74 @@ export default function SettingsPage() {
         </div>
       </div>
       <div className="mb-4 rounded-2xl border border-tt-border bg-tt-surface/80 p-4">
-        <p className="font-stat text-sm font-semibold text-tt-cyan/90">AI token usage (this device)</p>
-        <p className="mt-1 font-body text-xs text-zinc-400">
-          Input: {totalInputTokens.toLocaleString()} · Output: {totalOutputTokens.toLocaleString()}
-        </p>
-        <p className="mt-1 font-body text-sm text-zinc-200">
-          Estimated spend: ${totalEstimatedCostUsd.toFixed(4)}
-        </p>
-        <button type="button" className="tt-btn-ghost mt-2 min-h-[40px] px-3" onClick={resetUsage}>
-          Reset usage counter
-        </button>
+        <p className="font-stat text-sm font-semibold text-tt-cyan/90">AI token usage</p>
+        {usageLoading ? (
+          <p className="mt-1 font-body text-xs text-zinc-500">Loading…</p>
+        ) : supabaseOk && cloudUsage ? (
+          <>
+            <p className="mt-1 font-body text-xs text-zinc-400">
+              All devices (Supabase): Input {cloudUsage.inputTokens.toLocaleString()} · Output{" "}
+              {cloudUsage.outputTokens.toLocaleString()}
+            </p>
+            <p className="mt-1 font-body text-sm text-zinc-200">
+              Estimated spend: ${cloudUsage.estimatedCostUsd.toFixed(4)}
+            </p>
+          </>
+        ) : supabaseOk && cloudUsage === null ? (
+          <>
+            <p className="mt-1 font-body text-xs text-amber-200/90">
+              Couldn&apos;t load synced totals. Check the <code className="text-zinc-400">usage_events</code> table and
+              migration.
+            </p>
+            <p className="mt-1 font-body text-xs text-zinc-400">
+              This browser only: Input {totalInputTokens.toLocaleString()} · Output{" "}
+              {totalOutputTokens.toLocaleString()}
+            </p>
+            <p className="mt-1 font-body text-sm text-zinc-200">
+              Estimated spend: ${totalEstimatedCostUsd.toFixed(4)}
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="mt-1 font-body text-xs text-zinc-400">
+              This browser only: Input {totalInputTokens.toLocaleString()} · Output{" "}
+              {totalOutputTokens.toLocaleString()}
+            </p>
+            <p className="mt-1 font-body text-sm text-zinc-200">
+              Estimated spend: ${totalEstimatedCostUsd.toFixed(4)}
+            </p>
+            <p className="mt-2 font-body text-xs text-zinc-500">
+              Add Supabase env vars and run migration <code className="text-zinc-400">003_usage_events.sql</code> to
+              sync totals across phones and laptops.
+            </p>
+          </>
+        )}
+        <div className="mt-2 flex flex-wrap gap-2">
+          {supabaseOk ? (
+            <button
+              type="button"
+              className="tt-btn-ghost min-h-[40px] px-3"
+              disabled={usageLoading}
+              onClick={() => void refreshCloudUsage()}
+            >
+              Refresh totals
+            </button>
+          ) : null}
+          <button
+            type="button"
+            className="tt-btn-ghost min-h-[40px] px-3"
+            onClick={() => {
+              if (!confirm("Clear saved usage totals?")) return;
+              void (async () => {
+                await clearUsageEvents();
+                resetUsage();
+                await refreshCloudUsage();
+              })();
+            }}
+          >
+            Reset usage
+          </button>
+        </div>
       </div>
       {notice ? <p className="mb-4 rounded-xl border border-tt-border/80 bg-tt-surface/70 px-3 py-2 text-sm text-zinc-300">{notice}</p> : null}
 
@@ -303,10 +434,18 @@ export default function SettingsPage() {
           <button
             type="button"
             className="tt-btn-ghost min-h-[48px] w-full sm:w-auto sm:px-8"
-            disabled={saving || generating || inProgress}
+            disabled={saving || generatingKind !== null || inProgress}
             onClick={() => void onRandomizeTopics()}
           >
-            {generating ? "Generating..." : "Generate 5 From Theme"}
+            {generatingKind === "theme" ? "Generating..." : "Generate 5 From Theme"}
+          </button>
+          <button
+            type="button"
+            className="tt-btn-ghost min-h-[48px] w-full sm:w-auto sm:px-8"
+            disabled={saving || generatingKind !== null || inProgress}
+            onClick={() => void onRandomGiftedTopics()}
+          >
+            {generatingKind === "gifted" ? "Generating..." : "Random 5 (gifted 12)"}
           </button>
         </div>
         <label className="mt-3 flex flex-col gap-1 font-body text-xs text-zinc-500">
@@ -315,7 +454,7 @@ export default function SettingsPage() {
             className="min-h-[44px] rounded-xl border border-tt-border/80 bg-tt-bg/80 px-3 font-body text-sm text-white outline-none placeholder:text-zinc-600 focus:border-tt-cyan/50"
             placeholder="Example: Space, Marvel, 1980s, Nature"
             value={themeSeed}
-            disabled={saving || generating || inProgress}
+            disabled={saving || generatingKind !== null || inProgress}
             onChange={(e) => setThemeSeed(e.target.value)}
           />
         </label>

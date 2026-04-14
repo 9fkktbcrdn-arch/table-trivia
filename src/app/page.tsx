@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { TopicCard } from "@/components/TopicCard";
 import { getTopics } from "@/lib/db";
 import { isSupabaseConfigured } from "@/lib/supabase";
-import { GENERAL_TRIVIA_LABEL } from "@/lib/trivia-constants";
+import { EXTRA_CREDIT_LABEL, LEGACY_GENERAL_TRIVIA_NAME } from "@/lib/trivia-constants";
 import type { TopicRow } from "@/lib/types";
 import { useTriviaStore } from "@/store/trivia-store";
 
@@ -39,11 +39,15 @@ export default function HomePage() {
   }, []);
 
   const slots: (TopicRow | null)[] = [0, 1, 2, 3, 4].map((i) => topics[i] ?? null);
-  const topicNames = [...slots.map((t) => t?.name).filter(Boolean), GENERAL_TRIVIA_LABEL] as string[];
+  const topicNames = [...slots.map((t) => t?.name).filter(Boolean), EXTRA_CREDIT_LABEL] as string[];
+
+  const topicIsDone = (name: string) =>
+    completedTopics.includes(name) ||
+    (name === EXTRA_CREDIT_LABEL && completedTopics.includes(LEGACY_GENERAL_TRIVIA_NAME));
 
   const goTopic = (name: string) => {
     if (!playerName) return;
-    if (inProgress && completedTopics.includes(name)) return;
+    if (inProgress && topicIsDone(name)) return;
     if (inProgress && !lockedTopics.includes(name)) return;
     if (!inProgress) startGame(topicNames);
     router.push(`/quiz?topic=${encodeURIComponent(name)}`);
@@ -151,8 +155,8 @@ export default function HomePage() {
                     imageUrl={row.image_url}
                     onClick={() => goTopic(row.name)}
                     variant="topic"
-                    disabled={!playerName || (inProgress && completedTopics.includes(row.name))}
-                    completed={completedTopics.includes(row.name)}
+                    disabled={!playerName || (inProgress && topicIsDone(row.name))}
+                    completed={topicIsDone(row.name)}
                   />
                 </div>
               ) : (
@@ -169,11 +173,12 @@ export default function HomePage() {
 
             <div className="min-w-0">
               <TopicCard
-                title={GENERAL_TRIVIA_LABEL}
-                onClick={() => goTopic(GENERAL_TRIVIA_LABEL)}
-                variant="general"
-                disabled={!playerName || (inProgress && completedTopics.includes(GENERAL_TRIVIA_LABEL))}
-                completed={completedTopics.includes(GENERAL_TRIVIA_LABEL)}
+                title={EXTRA_CREDIT_LABEL}
+                subtitle="Synthesis · 2× points"
+                onClick={() => goTopic(EXTRA_CREDIT_LABEL)}
+                variant="extra"
+                disabled={!playerName || (inProgress && topicIsDone(EXTRA_CREDIT_LABEL))}
+                completed={topicIsDone(EXTRA_CREDIT_LABEL)}
               />
             </div>
 

@@ -32,4 +32,6 @@ export interface QuizQuestion {
 export interface GenerateQuizPayload {
   topic: string;
   difficulty: TriviaDifficulty;
+  /** For Extra Credit: the five topic names from this session (excluding Extra Credit). */
+  sessionTopics?: string[];
 }

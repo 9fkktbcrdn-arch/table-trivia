@@ -9,8 +9,10 @@ import { QuizLoading } from "@/components/QuizLoading";
 import { QuizQuestion as QuizQuestionView } from "@/components/QuizQuestion";
 import { appendFlaggedQuestion } from "@/lib/flagged-questions";
 import { saveScore } from "@/lib/db";
+import { isSupabaseConfigured } from "@/lib/supabase";
 import type { QuizQuestion, TriviaDifficulty } from "@/lib/types";
 import { maxPointsForQuestions, pointsForQuestion } from "@/lib/scoring";
+import { EXTRA_CREDIT_LABEL } from "@/lib/trivia-constants";
 import { useTriviaStore } from "@/store/trivia-store";
 
 function QuizFlow() {
@@ -23,6 +25,8 @@ function QuizFlow() {
   const playerName = useTriviaStore((s) => s.playerName);
   const completeTopic = useTriviaStore((s) => s.completeTopic);
   const addUsage = useTriviaStore((s) => s.addUsage);
+  const addRoundCost = useTriviaStore((s) => s.addRoundCost);
+  const lockedTopics = useTriviaStore((s) => s.lockedTopics);
 
   const [difficulty, setDifficulty] = useState<TriviaDifficulty | null>(difficultyParam);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -62,10 +66,16 @@ function QuizFlow() {
     setIssueReportedForQuestion(false);
     void replayNonce;
     try {
+      const isExtraCredit = topic.trim().toLowerCase() === EXTRA_CREDIT_LABEL.toLowerCase();
+      const sessionTopics = lockedTopics.filter((t) => t.toLowerCase() !== EXTRA_CREDIT_LABEL.toLowerCase());
       const res = await fetch("/api/generate-quiz", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic, difficulty }),
+        body: JSON.stringify({
+          topic,
+          difficulty,
+          ...(isExtraCredit ? { sessionTopics } : {}),
+        }),
       });
       const data = (await res.json()) as {
         questions?: QuizQuestion[];
@@ -88,14 +98,17 @@ function QuizFlow() {
       setQuestions(data.questions);
       setDemoMode(Boolean(data.demoMode));
       if (!data.demoMode) {
-        addUsage(data.inputTokens ?? 0, data.outputTokens ?? 0, data.estimatedCostUsd ?? 0);
+        addRoundCost(data.estimatedCostUsd ?? 0);
+        if (!isSupabaseConfigured()) {
+          addUsage(data.inputTokens ?? 0, data.outputTokens ?? 0, data.estimatedCostUsd ?? 0);
+        }
       }
     } catch {
       setError("Couldn't generate questions, try again.");
     } finally {
       setLoading(false);
     }
-  }, [topic, difficulty, replayNonce, addUsage]);
+  }, [topic, difficulty, replayNonce, addUsage, addRoundCost, lockedTopics]);
 
   useEffect(() => {
     if (!topic) return;
@@ -109,13 +122,16 @@ function QuizFlow() {
   };
 
   const onPickAnswer = (i: number) => {
-    if (!questions[idx] || revealed) return;
+    if (!topic || !questions[idx] || revealed) return;
     setSelected(i);
     setRevealed(true);
     if (i === questions[idx].correctIndex) {
       setCorrectTotal((c) => c + 1);
       if (difficulty) {
-        setPointsTotal((p) => p + pointsForQuestion(difficulty, questions[idx].questionDifficulty));
+        const extraCredit = topic.trim().toLowerCase() === EXTRA_CREDIT_LABEL.toLowerCase();
+        setPointsTotal((p) =>
+          p + pointsForQuestion(difficulty, questions[idx].questionDifficulty, { extraCredit }),
+        );
       }
     }
   };
@@ -128,7 +144,8 @@ function QuizFlow() {
       setRevealed(false);
       return;
     }
-    const maxPoints = maxPointsForQuestions(difficulty, questions);
+    const extraCredit = topic.trim().toLowerCase() === EXTRA_CREDIT_LABEL.toLowerCase();
+    const maxPoints = maxPointsForQuestions(difficulty, questions, { extraCredit });
     completeTopic(topic, pointsTotal, correctTotal, maxPoints);
     const state = useTriviaStore.getState();
     const finished = state.completedTopics.length >= state.lockedTopics.length && state.lockedTopics.length > 0;
@@ -216,7 +233,10 @@ function QuizFlow() {
   }
 
   const q = questions[idx];
-  const perQuestionPoints = difficulty ? pointsForQuestion(difficulty, q.questionDifficulty) : 0;
+  const isExtraCreditRound = displayTopic.trim().toLowerCase() === EXTRA_CREDIT_LABEL.toLowerCase();
+  const perQuestionPoints = difficulty
+    ? pointsForQuestion(difficulty, q.questionDifficulty, { extraCredit: isExtraCreditRound })
+    : 0;
   const feedback =
     revealed && selected !== null
       ? selected === q.correctIndex
@@ -258,6 +278,7 @@ function QuizFlow() {
           selectedIndex={selected}
           revealed={revealed}
           onAnswer={onPickAnswer}
+          extraCredit={isExtraCreditRound}
           issueReported={issueReportedForQuestion}
           onReportIssue={() => {
             if (!topic || !difficulty) return;

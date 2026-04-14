@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-type TopicCardVariant = "topic" | "general" | "create" | "empty";
+type TopicCardVariant = "topic" | "general" | "create" | "empty" | "extra";
 
 interface TopicCardProps {
   title: string;
@@ -63,7 +63,15 @@ export function TopicCard({ title, subtitle, onClick, variant = "topic", disable
       ) : null}
 
       <div className={ICON_ROW} aria-hidden>
-        {variant === "general" ? "⭐" : variant === "create" ? "✏️" : showImage ? null : <span className="opacity-0">·</span>}
+        {variant === "general"
+          ? "⭐"
+          : variant === "extra"
+            ? "🎓"
+            : variant === "create"
+              ? "✏️"
+              : showImage
+                ? null
+                : <span className="opacity-0">·</span>}
       </div>
       <span
         className={`relative z-10 line-clamp-2 min-h-[2.75rem] font-stat text-[1.05rem] font-bold leading-snug drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] sm:text-lg ${

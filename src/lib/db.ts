@@ -123,6 +123,42 @@ export async function getScores(limit = 50): Promise<ScoreRow[]> {
   return (data ?? []) as ScoreRow[];
 }
 
+export type UsageTotals = { inputTokens: number; outputTokens: number; estimatedCostUsd: number };
+
+export async function getUsageTotals(): Promise<UsageTotals | null> {
+  if (!isSupabaseConfigured()) return null;
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase.from("usage_events").select("input_tokens, output_tokens, estimated_cost_usd");
+  if (error) {
+    console.error("getUsageTotals", error);
+    return null;
+  }
+  const rows = (data ?? []) as Array<{
+    input_tokens: number;
+    output_tokens: number;
+    estimated_cost_usd: number;
+  }>;
+  return rows.reduce<UsageTotals>(
+    (acc, r) => ({
+      inputTokens: acc.inputTokens + (r.input_tokens ?? 0),
+      outputTokens: acc.outputTokens + (r.output_tokens ?? 0),
+      estimatedCostUsd: acc.estimatedCostUsd + Number(r.estimated_cost_usd ?? 0),
+    }),
+    { inputTokens: 0, outputTokens: 0, estimatedCostUsd: 0 },
+  );
+}
+
+export async function clearUsageEvents(): Promise<boolean> {
+  if (!isSupabaseConfigured()) return false;
+  const supabase = getSupabaseBrowserClient();
+  const { error } = await supabase.from("usage_events").delete().gte("input_tokens", -1);
+  if (error) {
+    console.error("clearUsageEvents", error);
+    return false;
+  }
+  return true;
+}
+
 export async function getHighScores(limit = 20): Promise<ScoreRow[]> {
   if (!isSupabaseConfigured()) return [];
   const supabase = getSupabaseBrowserClient();

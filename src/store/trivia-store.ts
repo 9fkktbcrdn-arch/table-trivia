@@ -23,7 +23,10 @@ interface TriviaStore {
   totalInputTokens: number;
   totalOutputTokens: number;
   totalEstimatedCostUsd: number;
+  /** Device-local token totals when Supabase usage sync is unavailable. */
   addUsage: (inputTokens: number, outputTokens: number, estimatedCostUsd: number) => void;
+  /** Per-session AI cost for the current game (results screen); independent of Supabase. */
+  addRoundCost: (estimatedCostUsd: number) => void;
   resetUsage: () => void;
 }
 
@@ -84,10 +87,16 @@ export const useTriviaStore = create<TriviaStore>()(
           totalInputTokens: state.totalInputTokens + Math.max(0, Math.floor(inputTokens)),
           totalOutputTokens: state.totalOutputTokens + Math.max(0, Math.floor(outputTokens)),
           totalEstimatedCostUsd: state.totalEstimatedCostUsd + Math.max(0, estimatedCostUsd),
-          currentGameEstimatedCostUsd: state.inProgress
-            ? state.currentGameEstimatedCostUsd + Math.max(0, estimatedCostUsd)
-            : state.currentGameEstimatedCostUsd,
         })),
+      addRoundCost: (estimatedCostUsd) =>
+        set((state) =>
+          state.inProgress
+            ? {
+                currentGameEstimatedCostUsd:
+                  state.currentGameEstimatedCostUsd + Math.max(0, estimatedCostUsd),
+              }
+            : state,
+        ),
       resetUsage: () =>
         set({
           totalInputTokens: 0,

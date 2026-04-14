@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
+import { recordUsageEvent } from "@/lib/usage-server";
 
 export const runtime = "nodejs";
 
@@ -19,6 +20,14 @@ function fallbackFromTheme(theme: string): string[] {
   const t = theme.trim() || "General";
   return [`${t} Basics`, `${t} History`, `${t} People`, `${t} Moments`, `${t} Pop Culture`];
 }
+
+const FALLBACK_GIFTED12 = [
+  "Physics & Forces",
+  "Logic & Puzzles",
+  "World Geography",
+  "Mythology & Epics",
+  "Programming Concepts",
+] as const;
 
 function parseTopicsJson(text: string): string[] {
   const trimmed = text.trim();
@@ -48,29 +57,53 @@ Rules:
 - All 5 topics should feel adjacent to the theme seed, but not be duplicates.
 - Use different angles (history, people, places, events, media, etc.) where possible.
 - Keep each topic 1-4 words.
-- Do not include "General Trivia".
+- Do not include "Extra Credit".
 - Return ONLY a JSON array of 5 strings, no markdown or extra text.
 
 Example format:
 ["Space History","Famous Astronauts","Planet Facts","Sci-Fi Films","Rocket Technology"]`;
 }
 
+function promptGifted12(): string {
+  return `Generate exactly 5 distinct quiz category names for a very bright 12-year-old who wants real depth — science, strategy, history, and "cool facts" — never condescending, never grad-school obscure.
+
+Rules:
+- Each category must be broad enough for 10 trivia questions.
+- Use five clearly different domains (no near-duplicates).
+- Think: space/physics ideas, logic and riddles, world history, mythology, coding or game design, engineering, nature at a curious-kid level — pick a strong mix.
+- Keep each topic 1-4 words.
+- Do not include "Extra Credit".
+- Return ONLY a JSON array of 5 strings, no markdown or extra text.
+
+Example format:
+["Orbital Mechanics","Logic & Riddles","Ancient Civilizations","Mythology","How Computers Work"]`;
+}
+
 export async function POST(req: Request) {
-  let theme = "";
+  let body: { theme?: unknown; gifted12?: unknown };
   try {
-    const body = (await req.json()) as { theme?: unknown };
-    theme = typeof body.theme === "string" ? body.theme.trim() : "";
+    body = (await req.json()) as { theme?: unknown; gifted12?: unknown };
   } catch {
-    // ignore
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  if (!theme) {
-    return NextResponse.json({ error: "Theme is required." }, { status: 400 });
+  const gifted12 = body.gifted12 === true;
+  const theme = typeof body.theme === "string" ? body.theme.trim() : "";
+
+  if (!gifted12 && !theme) {
+    return NextResponse.json({ error: 'Send { theme: "..." } or { gifted12: true }.' }, { status: 400 });
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
+  const userPrompt = gifted12 ? promptGifted12() : prompt(theme);
+  const fallbackTopics = gifted12 ? [...FALLBACK_GIFTED12] : fallbackFromTheme(theme);
+
   if (!apiKey) {
-    return NextResponse.json({ topics: fallbackFromTheme(theme), demoMode: true });
+    return NextResponse.json({
+      topics: fallbackTopics,
+      demoMode: true,
+      ...(gifted12 ? { gifted12: true } : { theme }),
+    });
   }
 
   const anthropic = new Anthropic({ apiKey });
@@ -80,7 +113,7 @@ export async function POST(req: Request) {
         model,
         max_tokens: 1024,
         system: "You generate concise category lists and output valid JSON only.",
-        messages: [{ role: "user", content: prompt(theme) }],
+        messages: [{ role: "user", content: userPrompt }],
       });
       const block = message.content.find((b) => b.type === "text");
       if (!block || block.type !== "text") throw new Error("No text in model response");
@@ -89,7 +122,20 @@ export async function POST(req: Request) {
       const outputTokens = message.usage?.output_tokens ?? 0;
       const price = MODEL_PRICING_PER_MTOK[model] ?? MODEL_PRICING_PER_MTOK["claude-sonnet-4-6"];
       const estimatedCostUsd = (inputTokens / 1_000_000) * price.input + (outputTokens / 1_000_000) * price.output;
-      return NextResponse.json({ topics, modelUsed: model, theme, inputTokens, outputTokens, estimatedCostUsd });
+      await recordUsageEvent({
+        source: "generate-topics",
+        inputTokens,
+        outputTokens,
+        estimatedCostUsd,
+      });
+      return NextResponse.json({
+        topics,
+        modelUsed: model,
+        inputTokens,
+        outputTokens,
+        estimatedCostUsd,
+        ...(gifted12 ? { gifted12: true } : { theme }),
+      });
     } catch (e) {
       console.warn(`[generate-topics] model ${model} failed`, e);
     }
@@ -97,10 +143,10 @@ export async function POST(req: Request) {
 
   return NextResponse.json(
     {
-      topics: fallbackFromTheme(theme),
+      topics: fallbackTopics,
       error: "Fell back to default topics because generation failed.",
       demoMode: true,
-      theme,
+      ...(gifted12 ? { gifted12: true } : { theme }),
     },
     { status: 200 },
   );
