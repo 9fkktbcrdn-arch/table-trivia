@@ -214,23 +214,23 @@ export default function SettingsPage() {
           {topics.map((t) => (
             <li
               key={t.id}
-              className="flex flex-col gap-2 rounded-2xl border border-tt-border bg-tt-surface/90 p-3 sm:p-4"
+              className="rounded-2xl border border-tt-border bg-tt-surface/90 p-3 sm:p-4"
             >
-              <input
-                key={`name-${t.id}-${t.name}`}
-                defaultValue={t.name}
-                disabled={saving || inProgress}
-                onBlur={(e) => {
-                  const v = e.target.value.trim();
-                  if (v && v !== t.name) void onRename(t.id, v);
-                }}
-                className="min-h-[48px] w-full rounded-xl border border-tt-border bg-tt-bg px-3 font-body text-lg text-white outline-none focus:border-tt-cyan/60"
-                aria-label="Topic name"
-              />
-              <div className="flex shrink-0 flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                <input
+                  key={`name-${t.id}-${t.name}`}
+                  defaultValue={t.name}
+                  disabled={saving || inProgress}
+                  onBlur={(e) => {
+                    const v = e.target.value.trim();
+                    if (v && v !== t.name) void onRename(t.id, v);
+                  }}
+                  className="min-h-[42px] w-full rounded-xl border border-tt-border bg-tt-bg px-3 font-body text-base text-white outline-none focus:border-tt-cyan/60"
+                  aria-label="Topic name"
+                />
                 <button
                   type="button"
-                  className="min-h-[48px] rounded-xl border border-tt-rose/50 px-3 font-stat text-sm text-tt-rose disabled:opacity-50"
+                  className="min-h-[34px] shrink-0 rounded-lg border border-tt-rose/50 px-2.5 font-stat text-xs text-tt-rose disabled:opacity-50"
                   disabled={saving || inProgress}
                   onClick={() => void onDelete(t.id)}
                 >

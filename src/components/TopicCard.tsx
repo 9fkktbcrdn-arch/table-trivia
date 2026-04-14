@@ -57,9 +57,13 @@ export function TopicCard({ title, subtitle, onClick, variant = "topic", disable
         </>
       )}
       {completed ? (
-        <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-black/45">
-          <span className="font-stat text-6xl font-black text-tt-rose drop-shadow-[0_0_20px_rgba(244,63,94,0.75)]">X</span>
-        </div>
+        <>
+          <div className="pointer-events-none absolute inset-0 z-20 bg-emerald-950/35" />
+          <div className="pointer-events-none absolute right-2 top-2 z-30 inline-flex items-center gap-1 rounded-full border border-emerald-300/50 bg-emerald-500/20 px-2 py-1 backdrop-blur-sm">
+            <span className="font-stat text-sm leading-none text-emerald-200">✓</span>
+            <span className="font-stat text-[10px] uppercase tracking-wide text-emerald-100/95">Done</span>
+          </div>
+        </>
       ) : null}
 
       <div className={ICON_ROW} aria-hidden>
