@@ -121,7 +121,6 @@ export default function SettingsPage() {
       setNotice("Enter a theme first (example: Space, 90s, Animals).");
       return;
     }
-    if (!confirm(`Replace your current topics with 5 new ones from that theme?`)) return;
     setGeneratingKind("theme");
     setSaving(true);
     setNotice(null);
@@ -153,14 +152,6 @@ export default function SettingsPage() {
   };
 
   const onRandomGiftedTopics = async () => {
-    if (
-      !confirm(
-        randomTarget === "gifted12"
-          ? "Replace your current topics with 5 random categories for a bright 12-year-old?"
-          : "Replace your current topics with 5 random middle-school categories?",
-      )
-    )
-      return;
     setGeneratingKind("gifted");
     setSaving(true);
     setNotice(null);
@@ -168,7 +159,7 @@ export default function SettingsPage() {
       const res = await fetch("/api/generate-topics", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ randomTarget }),
+        body: JSON.stringify({ randomTarget, randomSeed: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}` }),
       });
       const data = (await res.json()) as {
         topics?: string[];

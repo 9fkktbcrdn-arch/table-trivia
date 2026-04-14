@@ -21,23 +21,52 @@ function fallbackFromTheme(theme: string): string[] {
   return [`${t} Basics`, `${t} History`, `${t} People`, `${t} Moments`, `${t} Pop Culture`];
 }
 
-const FALLBACK_GIFTED12 = [
+const FALLBACK_GIFTED12_POOL = [
   "Physics & Forces",
   "Logic & Puzzles",
   "World Geography",
   "Mythology & Epics",
   "Programming Concepts",
+  "Space Exploration",
+  "Ancient Civilizations",
+  "Chess & Strategy",
+  "Engineering Design",
+  "AI & Robotics",
+  "Biology Mysteries",
+  "Math Patterns",
+  "Great Inventors",
+  "Ocean Science",
+  "Codes & Ciphers",
 ] as const;
 
-const FALLBACK_MIDDLE_SCHOOL = [
+const FALLBACK_MIDDLE_SCHOOL_POOL = [
   "Inventions & Innovators",
   "Earth & Climate",
   "Ancient History",
   "Animals & Adaptations",
   "Coding & Games",
+  "World Landmarks",
+  "Space Science",
+  "Natural Disasters",
+  "Human Body",
+  "Sports Legends",
+  "Greek Myths",
+  "Art Through Time",
+  "Music & Rhythm",
+  "Maps & Nations",
+  "Famous Experiments",
 ] as const;
 
 type RandomTarget = "gifted12" | "middle-school";
+
+function pickRandomTopics(pool: readonly string[], count = 5): string[] {
+  const shuffled = [...pool];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled.slice(0, count);
+}
 
 function parseTopicsJson(text: string): string[] {
   const trimmed = text.trim();
@@ -74,8 +103,10 @@ Example format:
 ["Space History","Famous Astronauts","Planet Facts","Sci-Fi Films","Rocket Technology"]`;
 }
 
-function promptGifted12(): string {
+function promptGifted12(randomSeed?: string): string {
   return `Generate exactly 5 distinct quiz category names for a very bright 12-year-old who wants real depth — science, strategy, history, and "cool facts" — never condescending, never grad-school obscure.
+
+Random seed: "${randomSeed ?? "none"}" (use this to vary the resulting category mix across requests)
 
 Rules:
 - Each category must be broad enough for 10 trivia questions.
@@ -89,8 +120,10 @@ Example format:
 ["Orbital Mechanics","Logic & Riddles","Ancient Civilizations","Mythology","How Computers Work"]`;
 }
 
-function promptMiddleSchool(): string {
+function promptMiddleSchool(randomSeed?: string): string {
   return `Generate exactly 5 distinct quiz category names for a curious middle-school learner (roughly ages 11-14): challenging but approachable, broad and fun.
+
+Random seed: "${randomSeed ?? "none"}" (use this to vary the resulting category mix across requests)
 
 Rules:
 - Each category must be broad enough for 10 trivia questions.
@@ -105,15 +138,16 @@ Example format:
 }
 
 export async function POST(req: Request) {
-  let body: { theme?: unknown; gifted12?: unknown; randomTarget?: unknown };
+  let body: { theme?: unknown; gifted12?: unknown; randomTarget?: unknown; randomSeed?: unknown };
   try {
-    body = (await req.json()) as { theme?: unknown; gifted12?: unknown; randomTarget?: unknown };
+    body = (await req.json()) as { theme?: unknown; gifted12?: unknown; randomTarget?: unknown; randomSeed?: unknown };
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
   const randomTarget: RandomTarget =
     body.randomTarget === "middle-school" ? "middle-school" : "gifted12";
+  const randomSeed = typeof body.randomSeed === "string" ? body.randomSeed.trim() : "";
   const gifted12 = body.gifted12 === true || (body.randomTarget !== undefined && randomTarget === "gifted12");
   const theme = typeof body.theme === "string" ? body.theme.trim() : "";
 
@@ -126,11 +160,15 @@ export async function POST(req: Request) {
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
-  const userPrompt = gifted12 ? promptGifted12() : body.randomTarget === "middle-school" ? promptMiddleSchool() : prompt(theme);
-  const fallbackTopics = gifted12
-    ? [...FALLBACK_GIFTED12]
+  const userPrompt = gifted12
+    ? promptGifted12(randomSeed)
     : body.randomTarget === "middle-school"
-      ? [...FALLBACK_MIDDLE_SCHOOL]
+      ? promptMiddleSchool(randomSeed)
+      : prompt(theme);
+  const fallbackTopics = gifted12
+    ? pickRandomTopics(FALLBACK_GIFTED12_POOL)
+    : body.randomTarget === "middle-school"
+      ? pickRandomTopics(FALLBACK_MIDDLE_SCHOOL_POOL)
       : fallbackFromTheme(theme);
 
   if (!apiKey) {
