@@ -304,19 +304,19 @@ export default function SettingsPage() {
 
           {topicGeneratorMode === "theme" ? (
             <div className="mt-3">
-              <label className="flex flex-col gap-1 font-body text-xs text-zinc-500">
-                Theme for related categories
-                <input
-                  className="min-h-[44px] rounded-xl border border-tt-border/80 bg-tt-bg/80 px-3 font-body text-sm text-white outline-none placeholder:text-zinc-600 focus:border-tt-cyan/50"
-                  placeholder="Example: Space, Marvel, 1980s, Nature"
-                  value={themeSeed}
-                  disabled={saving || generatingKind !== null || inProgress}
-                  onChange={(e) => setThemeSeed(e.target.value)}
-                />
-              </label>
+              <div className="rounded-lg border border-tt-border/70 bg-tt-bg/40 px-3 py-2">
+                <p className="font-body text-xs text-zinc-400">Theme</p>
+              </div>
+              <input
+                className="mt-2 min-h-[44px] w-full rounded-xl border border-tt-border/80 bg-tt-bg/80 px-3 font-body text-sm text-white outline-none placeholder:text-zinc-600 focus:border-tt-cyan/50"
+                placeholder="Example: Space, Marvel, 1980s, Nature"
+                value={themeSeed}
+                disabled={saving || generatingKind !== null || inProgress}
+                onChange={(e) => setThemeSeed(e.target.value)}
+              />
               <button
                 type="button"
-                className="tt-btn-primary mt-3 min-h-[44px] w-full sm:mx-auto sm:block sm:w-[220px]"
+                className="mt-3 min-h-[44px] w-full rounded-xl border border-tt-cyan/70 bg-tt-cyan/15 px-3 font-stat text-sm text-tt-cyan transition hover:bg-tt-cyan/20 disabled:opacity-50 sm:mx-auto sm:block sm:w-[220px]"
                 disabled={saving || generatingKind !== null || inProgress}
                 onClick={() => void onGenerateThemeTopics()}
               >
@@ -344,7 +344,7 @@ export default function SettingsPage() {
               </div>
               <button
                 type="button"
-                className="tt-btn-primary mt-3 min-h-[44px] w-full sm:mx-auto sm:block sm:w-[220px]"
+                className="mt-3 min-h-[44px] w-full rounded-xl border border-tt-cyan/70 bg-tt-cyan/15 px-3 font-stat text-sm text-tt-cyan transition hover:bg-tt-cyan/20 disabled:opacity-50 sm:mx-auto sm:block sm:w-[220px]"
                 disabled={saving || generatingKind !== null || inProgress}
                 onClick={() => void onRandomGiftedTopics()}
               >
