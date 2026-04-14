@@ -36,4 +36,6 @@ export interface GenerateQuizPayload {
   difficulty: TriviaDifficulty;
   /** For Extra Credit: the five topic names from this session (excluding Extra Credit). */
   sessionTopics?: string[];
+  /** Generated at game start so each game can request a novel question set. */
+  gameSeed?: string;
 }

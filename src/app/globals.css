@@ -24,14 +24,14 @@ body {
   }
 
   .tt-btn-primary {
-    @apply rounded-xl border-2 border-tt-cyan/70 bg-gradient-to-b from-teal-600/90 to-cyan-900/95 px-5 font-stat text-lg font-bold text-white shadow-[0_0_24px_rgba(34,211,238,0.18)] transition hover:border-tt-lime/80 hover:brightness-110 active:scale-[0.99] disabled:opacity-50;
+    @apply rounded-xl border-2 border-tt-cyan/70 bg-gradient-to-b from-teal-600/90 to-cyan-900/95 px-5 py-2 font-stat text-lg font-bold text-white shadow-[0_10px_26px_rgba(34,211,238,0.2)] transition hover:border-tt-lime/80 hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-tt-cyan/60 focus-visible:ring-offset-2 focus-visible:ring-offset-tt-bg active:scale-[0.99] disabled:opacity-50;
   }
 
   .tt-btn-secondary {
-    @apply rounded-xl border-2 border-tt-border bg-tt-surface px-5 font-stat text-lg font-semibold text-parchment transition hover:border-tt-magenta/50 hover:bg-tt-surface/80 active:scale-[0.99];
+    @apply rounded-xl border-2 border-tt-border bg-tt-surface px-5 py-2 font-stat text-lg font-semibold text-parchment transition hover:border-tt-magenta/50 hover:bg-tt-surface/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-tt-cyan/45 focus-visible:ring-offset-2 focus-visible:ring-offset-tt-bg active:scale-[0.99];
   }
 
   .tt-btn-ghost {
-    @apply rounded-xl border border-transparent font-stat text-lg text-tt-cyan transition hover:bg-white/5;
+    @apply rounded-xl border border-transparent px-2 py-1 font-stat text-lg text-tt-cyan transition hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-tt-cyan/45 focus-visible:ring-offset-2 focus-visible:ring-offset-tt-bg;
   }
 }

@@ -17,6 +17,7 @@ interface TriviaStore {
   totalCorrect: number;
   totalMaxPoints: number;
   currentGameEstimatedCostUsd: number;
+  currentGameSeed: string;
   startGame: (topics: string[]) => void;
   completeTopic: (topic: string, points: number, correct: number, maxPoints: number) => void;
   resetGame: () => void;
@@ -49,6 +50,7 @@ export const useTriviaStore = create<TriviaStore>()(
       totalCorrect: 0,
       totalMaxPoints: 0,
       currentGameEstimatedCostUsd: 0,
+      currentGameSeed: "",
       startGame: (topics) =>
         set({
           inProgress: true,
@@ -58,6 +60,10 @@ export const useTriviaStore = create<TriviaStore>()(
           totalCorrect: 0,
           totalMaxPoints: 0,
           currentGameEstimatedCostUsd: 0,
+          currentGameSeed:
+            typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+              ? crypto.randomUUID()
+              : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
         }),
       completeTopic: (topic, points, correct, maxPoints) =>
         set((state) => {
@@ -78,6 +84,7 @@ export const useTriviaStore = create<TriviaStore>()(
           totalCorrect: 0,
           totalMaxPoints: 0,
           currentGameEstimatedCostUsd: 0,
+          currentGameSeed: "",
         }),
       totalInputTokens: 0,
       totalOutputTokens: 0,
@@ -118,6 +125,7 @@ export const useTriviaStore = create<TriviaStore>()(
         totalCorrect: state.totalCorrect,
         totalMaxPoints: state.totalMaxPoints,
         currentGameEstimatedCostUsd: state.currentGameEstimatedCostUsd,
+        currentGameSeed: state.currentGameSeed,
         totalInputTokens: state.totalInputTokens,
         totalOutputTokens: state.totalOutputTokens,
         totalEstimatedCostUsd: state.totalEstimatedCostUsd,

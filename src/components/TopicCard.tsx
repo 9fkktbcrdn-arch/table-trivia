@@ -31,12 +31,12 @@ export function TopicCard({ title, subtitle, onClick, variant = "topic", disable
       disabled={disabled || isEmpty}
       onClick={onClick}
       className={[
-        "relative flex h-[132px] w-full flex-col overflow-hidden rounded-2xl border px-3 py-3 text-center shadow-md transition sm:h-[144px] sm:px-4",
+        "relative flex h-[132px] w-full flex-col overflow-hidden rounded-2xl border px-3 py-3 text-center shadow-md transition duration-150 sm:h-[144px] sm:px-4",
         isEmpty
           ? "cursor-default border-tt-border/50 bg-tt-surface/30 text-zinc-500"
           : showImage
-            ? "border-white/20 active:scale-[0.98] active:border-white/30"
-            : "border-tt-border/80 bg-gradient-to-b from-tt-surface to-tt-bg/95 text-parchment hover:border-tt-cyan/50 hover:shadow-[0_0_20px_rgba(34,211,238,0.12)] active:scale-[0.98] active:border-tt-cyan/40",
+            ? "border-white/20 shadow-[0_10px_22px_rgba(0,0,0,0.25)] active:scale-[0.98] active:border-white/30"
+            : "border-tt-border/80 bg-gradient-to-b from-tt-surface to-tt-bg/95 text-parchment hover:-translate-y-0.5 hover:border-tt-cyan/50 hover:shadow-[0_12px_24px_rgba(34,211,238,0.14)] active:scale-[0.98] active:border-tt-cyan/40",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -74,14 +74,14 @@ export function TopicCard({ title, subtitle, onClick, variant = "topic", disable
                 : <span className="opacity-0">·</span>}
       </div>
       <span
-        className={`relative z-10 line-clamp-2 min-h-[2.75rem] font-stat text-[1.05rem] font-bold leading-snug drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] sm:text-lg ${
+        className={`relative z-10 line-clamp-2 min-h-[2.75rem] font-stat text-[1.05rem] font-bold leading-snug tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] sm:text-lg ${
           isEmpty ? "text-zinc-500" : "text-white"
         }`}
       >
         {title}
       </span>
       {subtitle ? (
-        <span className="relative z-10 mt-auto line-clamp-1 pt-1 font-body text-xs text-zinc-400 drop-shadow-md sm:text-sm">
+        <span className="relative z-10 mt-auto line-clamp-1 pt-1 font-body text-xs text-zinc-300/95 drop-shadow-md sm:text-sm">
           {subtitle}
         </span>
       ) : (

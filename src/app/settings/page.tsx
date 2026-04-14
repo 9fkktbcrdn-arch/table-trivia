@@ -239,8 +239,8 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="tt-screen flex min-h-dvh flex-col bg-tt-bg px-4 pb-10 pt-6 sm:px-6">
-      <header className="mb-6 flex items-center gap-3">
+    <div className="tt-screen flex min-h-dvh flex-col bg-tt-bg px-4 pb-10 pt-5 sm:px-6">
+      <header className="mb-5 flex items-center gap-3 rounded-2xl border border-tt-border/60 bg-tt-surface/55 px-3 py-2.5">
         <Link href="/" className="tt-btn-ghost min-h-[48px] min-w-[48px] px-2">
           ←
         </Link>
@@ -255,7 +255,7 @@ export default function SettingsPage() {
         </p>
       ) : null}
       <div className="mb-4 rounded-2xl border border-tt-border bg-tt-surface/80 p-4">
-        <p className="font-stat text-sm font-semibold text-tt-cyan/90">Game controls</p>
+        <p className="font-stat text-sm font-semibold uppercase tracking-wide text-tt-cyan/90">Game controls</p>
         <div className="mt-2 flex flex-col gap-2 sm:flex-row">
           <button
             type="button"
@@ -269,7 +269,7 @@ export default function SettingsPage() {
         </div>
       </div>
       <div className="mb-4 rounded-2xl border border-tt-border bg-tt-surface/80 p-4">
-        <p className="font-stat text-sm font-semibold text-tt-cyan/90">AI token usage</p>
+        <p className="font-stat text-sm font-semibold uppercase tracking-wide text-tt-cyan/90">AI token usage</p>
         {usageLoading ? (
           <p className="mt-1 font-body text-xs text-zinc-500">Loading…</p>
         ) : supabaseOk && cloudUsage ? (
@@ -338,7 +338,9 @@ export default function SettingsPage() {
           </button>
         </div>
       </div>
-      {notice ? <p className="mb-4 rounded-xl border border-tt-border/80 bg-tt-surface/70 px-3 py-2 text-sm text-zinc-300">{notice}</p> : null}
+      {notice ? (
+        <p className="mb-4 rounded-xl border border-tt-cyan/25 bg-tt-surface/70 px-3 py-2 text-sm text-zinc-200">{notice}</p>
+      ) : null}
 
       {loading ? (
         <p className="text-zinc-500">Loading…</p>
@@ -403,7 +405,9 @@ export default function SettingsPage() {
       )}
 
       <div className="mt-6 rounded-2xl border border-dashed border-tt-border/80 bg-tt-bg/80 p-4">
-        <p className="font-stat text-sm font-semibold text-tt-cyan/90">Add topic ({topics.length}/{MAX_TOPICS})</p>
+        <p className="font-stat text-sm font-semibold uppercase tracking-wide text-tt-cyan/90">
+          Topic editing ({topics.length}/{MAX_TOPICS})
+        </p>
         <p className="mt-1 font-body text-xs text-zinc-500">
           For tile art, use a <strong>direct image link</strong> (ends in .jpg / .png / .webp or a CDN URL that shows only the image). Run the SQL migration{" "}
           <code className="text-zinc-400">002_topic_image_url.sql</code> in Supabase if you haven&apos;t yet.

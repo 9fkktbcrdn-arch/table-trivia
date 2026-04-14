@@ -27,6 +27,7 @@ function QuizFlow() {
   const addUsage = useTriviaStore((s) => s.addUsage);
   const addRoundCost = useTriviaStore((s) => s.addRoundCost);
   const lockedTopics = useTriviaStore((s) => s.lockedTopics);
+  const currentGameSeed = useTriviaStore((s) => s.currentGameSeed);
 
   const [difficulty, setDifficulty] = useState<TriviaDifficulty | null>(difficultyParam);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -70,10 +71,12 @@ function QuizFlow() {
       const sessionTopics = lockedTopics.filter((t) => t.toLowerCase() !== EXTRA_CREDIT_LABEL.toLowerCase());
       const res = await fetch("/api/generate-quiz", {
         method: "POST",
+        cache: "no-store",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           topic,
           difficulty,
+          gameSeed: currentGameSeed,
           ...(isExtraCredit ? { sessionTopics } : {}),
         }),
       });
@@ -108,7 +111,7 @@ function QuizFlow() {
     } finally {
       setLoading(false);
     }
-  }, [topic, difficulty, replayNonce, addUsage, addRoundCost, lockedTopics]);
+  }, [topic, difficulty, replayNonce, addUsage, addRoundCost, lockedTopics, currentGameSeed]);
 
   useEffect(() => {
     if (!topic) return;
@@ -237,6 +240,7 @@ function QuizFlow() {
   const perQuestionPoints = difficulty
     ? pointsForQuestion(difficulty, q.questionDifficulty, { extraCredit: isExtraCreditRound })
     : 0;
+  const progressPct = ((idx + 1) / 10) * 100;
   const feedback =
     revealed && selected !== null
       ? selected === q.correctIndex
@@ -245,15 +249,27 @@ function QuizFlow() {
       : null;
 
   return (
-    <div className="tt-screen flex min-h-dvh flex-col bg-tt-bg px-4 pb-8 pt-6 sm:px-6">
-      <div className="mb-4 flex items-center justify-between gap-2">
-        <Link href="/" className="tt-btn-ghost min-h-[48px] min-w-[48px] px-2 text-lg">
-          ←
-        </Link>
-        <p className="truncate font-body text-sm text-zinc-500">{displayTopic}</p>
-        <p className="font-body text-xs text-zinc-500">
-          {pointsTotal} pts
-        </p>
+    <div className="tt-screen flex min-h-dvh flex-col bg-tt-bg px-4 pb-8 pt-5 sm:px-6">
+      <div className="mb-4 rounded-2xl border border-tt-border/80 bg-tt-surface/75 p-3">
+        <div className="flex items-center justify-between gap-2">
+          <Link href="/" className="tt-btn-ghost min-h-[44px] min-w-[44px] px-2 text-lg">
+            ←
+          </Link>
+          <p className="truncate px-1 font-body text-sm text-zinc-300">{displayTopic}</p>
+          <p className="font-stat text-xs uppercase tracking-wide text-zinc-400">{pointsTotal} pts</p>
+        </div>
+        <div className="mt-2.5">
+          <div className="mb-1 flex items-center justify-between font-body text-xs text-zinc-500">
+            <span>Question {idx + 1}/10</span>
+            <span>{Math.round(progressPct)}%</span>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-tt-bg/80">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-tt-cyan/90 to-tt-lime/80 transition-all duration-300"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+        </div>
       </div>
 
       {demoMode && (
@@ -269,7 +285,7 @@ function QuizFlow() {
         initial={{ opacity: 0, x: 16 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.2 }}
-        className="flex min-h-0 flex-1 flex-col"
+        className="flex min-h-0 flex-1 flex-col rounded-2xl border border-tt-border/70 bg-tt-surface/60 p-3 sm:p-4"
       >
         <QuizQuestionView
           question={q}

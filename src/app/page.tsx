@@ -57,7 +57,7 @@ export default function HomePage() {
 
   return (
     <div className="tt-screen relative flex min-h-dvh flex-col bg-tt-bg bg-[radial-gradient(ellipse_120%_80%_at_50%_-20%,rgba(34,211,238,0.1),transparent)]">
-      <header className="flex shrink-0 items-center justify-between gap-4 border-b border-tt-border/40 px-4 py-4 sm:px-6">
+      <header className="flex shrink-0 items-center justify-between gap-4 border-b border-tt-border/40 bg-tt-surface/45 px-4 py-4 backdrop-blur-sm sm:px-6">
         <div className="min-w-0">
           <h1 className="font-stat text-2xl font-bold tracking-tight text-white sm:text-3xl">Table Trivia</h1>
           <p className="mt-0.5 font-body text-sm text-zinc-500 sm:text-base">
@@ -109,7 +109,7 @@ export default function HomePage() {
         </div>
       )}
       {inProgress && completedTopics.length === topicNames.length ? (
-        <div className="mx-4 mt-3 flex items-center justify-between rounded-xl border border-emerald-500/40 bg-emerald-900/25 px-3 py-2 sm:mx-6">
+        <div className="mx-4 mt-3 flex items-center justify-between rounded-xl border border-emerald-500/40 bg-emerald-900/25 px-3 py-2.5 sm:mx-6">
           <p className="font-body text-sm text-emerald-200">All topics completed. Start a fresh game anytime.</p>
           <button type="button" className="tt-btn-ghost min-h-[40px] px-3" onClick={resetGame}>
             New game
@@ -117,7 +117,7 @@ export default function HomePage() {
         </div>
       ) : null}
       {inProgress && completedTopics.length < topicNames.length ? (
-        <div className="mx-4 mt-3 flex items-center justify-between rounded-xl border border-amber-500/40 bg-amber-950/25 px-3 py-2 sm:mx-6">
+        <div className="mx-4 mt-3 flex items-center justify-between rounded-xl border border-amber-500/40 bg-amber-950/25 px-3 py-2.5 sm:mx-6">
           <p className="font-body text-sm text-amber-100">
             {completedTopics.length}/{topicNames.length} topics complete
           </p>
@@ -146,7 +146,7 @@ export default function HomePage() {
         {loading ? (
           <div className="flex flex-1 items-center justify-center font-body text-sm text-zinc-500">Loading topics…</div>
         ) : (
-          <div className="mx-auto grid w-full max-w-lg grid-cols-2 gap-3 sm:max-w-xl sm:gap-4">
+          <div className="mx-auto grid w-full max-w-lg grid-cols-2 gap-3.5 sm:max-w-xl sm:gap-4">
             {slots.map((row, idx) =>
               row ? (
                 <div key={row.id} className="min-w-0">

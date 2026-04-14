@@ -70,6 +70,7 @@ function buildUserPrompt(
   topic: string,
   difficulty: TriviaDifficulty,
   sessionTopics: string[] | undefined,
+  gameSeed: string | undefined,
 ): string {
   const trimmed = topic.trim();
   const extra = isExtraCreditTopic(trimmed);
@@ -84,6 +85,9 @@ Generate 10 NEW questions that connect, compare, or combine knowledge across tho
   const guidance = extra ? extraCreditDifficultyGuidance(difficulty) : difficultyGuidance(difficulty);
 
   return `${topicLine}
+
+Game seed: "${gameSeed ?? "none"}"
+Treat this seed as a randomization key and produce a materially different set of questions for different seeds, even when topic/difficulty are the same.
 
 ${guidance}
 
@@ -215,12 +219,13 @@ async function generateWithModel(
   topic: string,
   difficulty: TriviaDifficulty,
   sessionTopics: string[] | undefined,
+  gameSeed: string | undefined,
 ): Promise<{ questions: QuizQuestion[]; inputTokens: number; outputTokens: number; estimatedCostUsd: number }> {
   const message = await anthropic.messages.create({
     model,
     max_tokens: 8192,
     system: SYSTEM,
-    messages: [{ role: "user", content: buildUserPrompt(topic, difficulty, sessionTopics) }],
+    messages: [{ role: "user", content: buildUserPrompt(topic, difficulty, sessionTopics, gameSeed) }],
   });
 
   const block = message.content.find((b) => b.type === "text");
@@ -270,6 +275,7 @@ export async function POST(req: Request) {
   const sessionTopics = Array.isArray(body.sessionTopics)
     ? body.sessionTopics.filter((t): t is string => typeof t === "string" && t.trim().length > 0).map((t) => t.trim())
     : undefined;
+  const gameSeed = typeof body.gameSeed === "string" && body.gameSeed.trim().length > 0 ? body.gameSeed.trim() : undefined;
   if (!topic.trim()) {
     return NextResponse.json({ error: "Topic is required" }, { status: 400 });
   }
@@ -292,7 +298,7 @@ export async function POST(req: Request) {
 
   for (const model of candidates) {
     try {
-      const generated = await generateWithModel(anthropic, model, topic, difficulty, sessionTopics);
+      const generated = await generateWithModel(anthropic, model, topic, difficulty, sessionTopics, gameSeed);
       await recordUsageEvent({
         source: "generate-quiz",
         inputTokens: generated.inputTokens,
