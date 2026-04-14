@@ -10,3 +10,5 @@ npm run dev
 SQL: run `001_initial_schema.sql` then `002_topic_image_url.sql` in the Supabase SQL editor (order matters).
 
 <!-- no-op: trigger redeploy -->
+
+<!-- no-op: trigger redeploy 2 -->
