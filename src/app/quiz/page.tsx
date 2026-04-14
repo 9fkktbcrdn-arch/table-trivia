@@ -157,7 +157,12 @@ function QuizFlow() {
     const maxPoints = maxPointsForQuestions(difficulty, questions, { extraCredit });
     completeTopic(topic, pointsTotal, correctTotal, maxPoints);
     const state = useTriviaStore.getState();
-    const finished = state.completedTopics.length >= state.lockedTopics.length && state.lockedTopics.length > 0;
+    const normalizeTopic = (name: string) =>
+      name.trim().toLowerCase() === "general trivia" ? EXTRA_CREDIT_LABEL.toLowerCase() : name.trim().toLowerCase();
+    const expectedTopics = [...new Set(state.lockedTopics.map((t) => t.trim()).filter((t) => t.length > 0))];
+    const completedNormalized = new Set(state.completedTopics.map(normalizeTopic));
+    const completedExpectedCount = expectedTopics.filter((t) => completedNormalized.has(normalizeTopic(t))).length;
+    const finished = expectedTopics.length >= 2 && completedExpectedCount >= expectedTopics.length;
     if (finished) {
       await saveScore({
         topic: "Full Game (6 topics)",

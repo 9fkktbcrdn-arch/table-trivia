@@ -38,6 +38,13 @@ export default function HomePage() {
     };
   }, []);
 
+  useEffect(() => {
+    // Heal stale persisted sessions from older builds.
+    if (inProgress && lockedTopics.length < 2) {
+      resetGame();
+    }
+  }, [inProgress, lockedTopics.length, resetGame]);
+
   const slots: (TopicRow | null)[] = [0, 1, 2, 3, 4].map((i) => topics[i] ?? null);
   const topicNames = [...slots.map((t) => t?.name).filter(Boolean), EXTRA_CREDIT_LABEL] as string[];
 
