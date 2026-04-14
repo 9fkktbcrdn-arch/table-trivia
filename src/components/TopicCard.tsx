@@ -20,6 +20,8 @@ const ICON_ROW = "relative z-10 flex h-8 shrink-0 items-center justify-center te
 export function TopicCard({ title, subtitle, onClick, variant = "topic", disabled, imageUrl, completed }: TopicCardProps) {
   const isEmpty = variant === "empty";
   const trimmedUrl = imageUrl?.trim() ?? "";
+  const compactTitle = title.length > 16;
+  const veryLongTitle = title.length > 24;
   /** URL that failed to load — hide image until the URL changes. */
   const [failedUrl, setFailedUrl] = useState("");
   const showImage =
@@ -78,18 +80,20 @@ export function TopicCard({ title, subtitle, onClick, variant = "topic", disable
                 : <span className="opacity-0">·</span>}
       </div>
       <span
-        className={`relative z-10 line-clamp-2 min-h-[2.75rem] font-stat text-[1.05rem] font-bold leading-snug tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] sm:text-lg ${
+        className={`relative z-10 line-clamp-2 min-h-[2.6rem] font-stat font-bold leading-tight tracking-tight [text-wrap:balance] drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] sm:min-h-[2.7rem] ${
+          veryLongTitle ? "text-[0.94rem] sm:text-[1.02rem]" : compactTitle ? "text-[1rem] sm:text-[1.08rem]" : "text-[1.06rem] sm:text-[1.16rem]"
+        } ${
           isEmpty ? "text-zinc-500" : "text-white"
         }`}
       >
         {title}
       </span>
       {subtitle ? (
-        <span className="relative z-10 mt-auto line-clamp-1 pt-1 font-body text-xs text-zinc-300/95 drop-shadow-md sm:text-sm">
+        <span className="relative z-10 mt-auto line-clamp-1 pt-1 font-body text-[11px] tracking-wide text-zinc-300/95 drop-shadow-md sm:text-xs">
           {subtitle}
         </span>
       ) : (
-        <span className="relative z-10 mt-auto h-5 shrink-0 sm:h-5" aria-hidden />
+        <span className="relative z-10 mt-auto h-4 shrink-0 sm:h-4" aria-hidden />
       )}
     </button>
   );
