@@ -31,7 +31,7 @@ export function TopicCard({ title, subtitle, onClick, variant = "topic", disable
       disabled={disabled || isEmpty}
       onClick={onClick}
       className={[
-        "relative flex h-[132px] w-full flex-col overflow-hidden rounded-2xl border px-3 py-3 text-center shadow-md transition duration-150 sm:h-[144px] sm:px-4",
+        "relative flex h-[132px] w-full flex-col overflow-hidden rounded-2xl border px-3 py-3 text-center shadow-md transition duration-150 sm:h-[144px] sm:px-4 md:h-[156px]",
         isEmpty
           ? "cursor-default border-tt-border/50 bg-tt-surface/30 text-zinc-500"
           : showImage

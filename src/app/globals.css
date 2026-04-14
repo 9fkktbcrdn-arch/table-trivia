@@ -20,7 +20,7 @@ body {
 
 @layer components {
   .tt-screen {
-    @apply mx-auto w-full max-w-3xl;
+    @apply mx-auto w-full max-w-4xl;
   }
 
   .tt-btn-primary {

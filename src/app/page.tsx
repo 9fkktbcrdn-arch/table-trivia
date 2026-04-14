@@ -65,6 +65,17 @@ export default function HomePage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {inProgress ? (
+            <button
+              type="button"
+              className="tt-btn-ghost min-h-[44px] px-3 text-sm"
+              onClick={() => {
+                if (confirm("Restart current game? This clears progress.")) resetGame();
+              }}
+            >
+              Reset
+            </button>
+          ) : null}
           <Link
             href="/scores"
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-tt-border/80 bg-tt-surface/90 text-lg text-tt-cyan transition hover:border-tt-cyan/50 hover:bg-tt-surface"
@@ -146,7 +157,7 @@ export default function HomePage() {
         {loading ? (
           <div className="flex flex-1 items-center justify-center font-body text-sm text-zinc-500">Loading topics…</div>
         ) : (
-          <div className="mx-auto grid w-full max-w-lg grid-cols-2 gap-3.5 sm:max-w-xl sm:gap-4">
+          <div className="mx-auto grid w-full max-w-lg grid-cols-2 gap-3.5 sm:max-w-2xl sm:gap-4 md:max-w-4xl md:grid-cols-3">
             {slots.map((row, idx) =>
               row ? (
                 <div key={row.id} className="min-w-0">

@@ -8,7 +8,6 @@ import {
   deleteTopic,
   getTopics,
   getUsageTotals,
-  reorderTopics,
   updateTopic,
   type UsageTotals,
 } from "@/lib/db";
@@ -25,6 +24,7 @@ export default function SettingsPage() {
   const [newImageUrl, setNewImageUrl] = useState("");
   const [saving, setSaving] = useState(false);
   const [generatingKind, setGeneratingKind] = useState<null | "theme" | "gifted">(null);
+  const [topicGeneratorMode, setTopicGeneratorMode] = useState<"theme" | "random">("random");
   const [notice, setNotice] = useState<string | null>(null);
   const [themeSeed, setThemeSeed] = useState("");
   const [cloudUsage, setCloudUsage] = useState<UsageTotals | null>(null);
@@ -67,26 +67,11 @@ export default function SettingsPage() {
 
   const supabaseOk = isSupabaseConfigured();
   const inProgress = useTriviaStore((s) => s.inProgress);
-  const resetGame = useTriviaStore((s) => s.resetGame);
   const addUsage = useTriviaStore((s) => s.addUsage);
   const totalInputTokens = useTriviaStore((s) => s.totalInputTokens);
   const totalOutputTokens = useTriviaStore((s) => s.totalOutputTokens);
   const totalEstimatedCostUsd = useTriviaStore((s) => s.totalEstimatedCostUsd);
   const resetUsage = useTriviaStore((s) => s.resetUsage);
-
-  const persistOrder = async (rows: TopicRow[]) => {
-    setTopics(rows);
-    await reorderTopics(rows.map((r) => r.id));
-    await load();
-  };
-
-  const move = async (index: number, dir: -1 | 1) => {
-    const j = index + dir;
-    if (j < 0 || j >= topics.length) return;
-    const next = [...topics];
-    [next[index], next[j]] = [next[j], next[index]];
-    await persistOrder(next);
-  };
 
   const onRename = async (id: string, name: string) => {
     setSaving(true);
@@ -155,7 +140,7 @@ export default function SettingsPage() {
     setNotice(successNotice);
   };
 
-  const onRandomizeTopics = async () => {
+  const onGenerateThemeTopics = async () => {
     const theme = themeSeed.trim();
     if (!theme) {
       setNotice("Enter a theme first (example: Space, 90s, Animals).");
@@ -254,21 +239,149 @@ export default function SettingsPage() {
           A game is currently in progress. Finish all topics before changing the list.
         </p>
       ) : null}
-      <div className="mb-4 rounded-2xl border border-tt-border bg-tt-surface/80 p-4">
-        <p className="font-stat text-sm font-semibold uppercase tracking-wide text-tt-cyan/90">Game controls</p>
-        <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+      {notice ? (
+        <p className="mb-4 rounded-xl border border-tt-cyan/25 bg-tt-surface/70 px-3 py-2 text-sm text-zinc-200">{notice}</p>
+      ) : null}
+
+      {loading ? (
+        <p className="text-zinc-500">Loading…</p>
+      ) : (
+        <ul className="flex flex-col gap-4">
+          {topics.map((t) => (
+            <li
+              key={t.id}
+              className="flex flex-col gap-2 rounded-2xl border border-tt-border bg-tt-surface/90 p-3 sm:p-4"
+            >
+              <input
+                key={`name-${t.id}-${t.name}`}
+                defaultValue={t.name}
+                disabled={saving || inProgress}
+                onBlur={(e) => {
+                  const v = e.target.value.trim();
+                  if (v && v !== t.name) void onRename(t.id, v);
+                }}
+                className="min-h-[48px] w-full rounded-xl border border-tt-border bg-tt-bg px-3 font-body text-lg text-white outline-none focus:border-tt-cyan/60"
+                aria-label="Topic name"
+              />
+              <input
+                key={`img-${t.id}-${t.image_url ?? ""}`}
+                defaultValue={t.image_url ?? ""}
+                disabled={saving || inProgress}
+                onBlur={(e) => void onImageUrlBlur(t.id, t.image_url, e.target.value)}
+                placeholder="Image URL (optional) — paste a direct link to a .jpg or .png"
+                className="min-h-[44px] w-full rounded-xl border border-tt-border/80 bg-tt-bg/80 px-3 font-body text-sm text-white outline-none placeholder:text-zinc-600 focus:border-tt-cyan/50"
+                aria-label="Topic image URL"
+              />
+              <div className="flex shrink-0 flex-wrap gap-2">
+                <button
+                  type="button"
+                  className="min-h-[48px] rounded-xl border border-tt-rose/50 px-3 font-stat text-sm text-tt-rose disabled:opacity-50"
+                  disabled={saving || inProgress}
+                  onClick={() => void onDelete(t.id)}
+                >
+                  Delete
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className="mt-6 rounded-2xl border border-dashed border-tt-border/80 bg-tt-bg/80 p-4">
+        <p className="font-stat text-sm font-semibold uppercase tracking-wide text-tt-cyan/90">
+          Topic editing ({topics.length}/{MAX_TOPICS})
+        </p>
+        <p className="mt-1 font-body text-xs text-zinc-500">
+          For tile art, use a <strong>direct image link</strong> (ends in .jpg / .png / .webp or a CDN URL that shows only the image). Run the SQL migration{" "}
+          <code className="text-zinc-400">002_topic_image_url.sql</code> in Supabase if you haven&apos;t yet.
+        </p>
+        <input
+          className="mt-3 min-h-[48px] w-full rounded-xl border border-tt-border bg-tt-surface px-3 font-body text-lg text-white outline-none focus:border-tt-cyan/60"
+          placeholder="Topic name, e.g. Liverpool FC"
+          value={newName}
+          disabled={saving || inProgress || topics.length >= MAX_TOPICS}
+          onChange={(e) => setNewName(e.target.value)}
+        />
+        <input
+          className="mt-2 min-h-[44px] w-full rounded-xl border border-tt-border/80 bg-tt-bg/80 px-3 font-body text-sm text-white outline-none placeholder:text-zinc-600 focus:border-tt-cyan/50"
+          placeholder="Optional image URL for the home tile"
+          value={newImageUrl}
+          disabled={saving || inProgress || topics.length >= MAX_TOPICS}
+          onChange={(e) => setNewImageUrl(e.target.value)}
+        />
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
           <button
             type="button"
-            className="tt-btn-ghost min-h-[44px] w-full sm:w-auto sm:px-6"
-            onClick={() => {
-              if (!inProgress || confirm("Restart current game? This clears topic progress.")) resetGame();
-            }}
+            className="tt-btn-primary min-h-[48px] w-full sm:w-auto sm:px-8"
+            disabled={saving || inProgress || topics.length >= MAX_TOPICS}
+            onClick={() => void onAdd()}
           >
-            Restart game
+            Add
           </button>
         </div>
+
+        <div className="mt-3 rounded-xl border border-tt-border/80 bg-tt-surface/40 p-3">
+          <p className="font-stat text-xs uppercase tracking-wide text-zinc-400">Generate 5 topics</p>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              className={`min-h-[44px] rounded-xl border px-3 font-stat text-sm transition ${
+                topicGeneratorMode === "theme"
+                  ? "border-tt-cyan/70 bg-tt-cyan/15 text-tt-cyan"
+                  : "border-tt-border/80 bg-tt-bg/70 text-zinc-300 hover:border-tt-cyan/40"
+              }`}
+              disabled={saving || generatingKind !== null || inProgress}
+              onClick={() => setTopicGeneratorMode("theme")}
+            >
+              Theme
+            </button>
+            <button
+              type="button"
+              className={`min-h-[44px] rounded-xl border px-3 font-stat text-sm transition ${
+                topicGeneratorMode === "random"
+                  ? "border-tt-cyan/70 bg-tt-cyan/15 text-tt-cyan"
+                  : "border-tt-border/80 bg-tt-bg/70 text-zinc-300 hover:border-tt-cyan/40"
+              }`}
+              disabled={saving || generatingKind !== null || inProgress}
+              onClick={() => {
+                setTopicGeneratorMode("random");
+                void onRandomGiftedTopics();
+              }}
+            >
+              {generatingKind === "gifted" ? "Generating..." : "Random"}
+            </button>
+          </div>
+
+          {topicGeneratorMode === "theme" ? (
+            <div className="mt-3">
+              <label className="flex flex-col gap-1 font-body text-xs text-zinc-500">
+                Theme for related categories
+                <input
+                  className="min-h-[44px] rounded-xl border border-tt-border/80 bg-tt-bg/80 px-3 font-body text-sm text-white outline-none placeholder:text-zinc-600 focus:border-tt-cyan/50"
+                  placeholder="Example: Space, Marvel, 1980s, Nature"
+                  value={themeSeed}
+                  disabled={saving || generatingKind !== null || inProgress}
+                  onChange={(e) => setThemeSeed(e.target.value)}
+                />
+              </label>
+              <button
+                type="button"
+                className="tt-btn-ghost mt-2 min-h-[44px] w-full sm:w-auto sm:px-6"
+                disabled={saving || generatingKind !== null || inProgress}
+                onClick={() => void onGenerateThemeTopics()}
+              >
+                {generatingKind === "theme" ? "Generating..." : "Generate from Theme"}
+              </button>
+            </div>
+          ) : (
+            <p className="mt-3 font-body text-xs text-zinc-400">
+              Random mode generates 5 categories tailored for a very gifted 12-year-old.
+            </p>
+          )}
+        </div>
       </div>
-      <div className="mb-4 rounded-2xl border border-tt-border bg-tt-surface/80 p-4">
+
+      <div className="mt-6 rounded-2xl border border-tt-border bg-tt-surface/80 p-4">
         <p className="font-stat text-sm font-semibold uppercase tracking-wide text-tt-cyan/90">AI token usage</p>
         {usageLoading ? (
           <p className="mt-1 font-body text-xs text-zinc-500">Loading…</p>
@@ -337,131 +450,6 @@ export default function SettingsPage() {
             Reset usage
           </button>
         </div>
-      </div>
-      {notice ? (
-        <p className="mb-4 rounded-xl border border-tt-cyan/25 bg-tt-surface/70 px-3 py-2 text-sm text-zinc-200">{notice}</p>
-      ) : null}
-
-      {loading ? (
-        <p className="text-zinc-500">Loading…</p>
-      ) : (
-        <ul className="flex flex-col gap-4">
-          {topics.map((t, i) => (
-            <li
-              key={t.id}
-              className="flex flex-col gap-2 rounded-2xl border border-tt-border bg-tt-surface/90 p-3 sm:p-4"
-            >
-              <input
-                key={`name-${t.id}-${t.name}`}
-                defaultValue={t.name}
-                disabled={saving || inProgress}
-                onBlur={(e) => {
-                  const v = e.target.value.trim();
-                  if (v && v !== t.name) void onRename(t.id, v);
-                }}
-                className="min-h-[48px] w-full rounded-xl border border-tt-border bg-tt-bg px-3 font-body text-lg text-white outline-none focus:border-tt-cyan/60"
-                aria-label="Topic name"
-              />
-              <input
-                key={`img-${t.id}-${t.image_url ?? ""}`}
-                defaultValue={t.image_url ?? ""}
-                disabled={saving || inProgress}
-                onBlur={(e) => void onImageUrlBlur(t.id, t.image_url, e.target.value)}
-                placeholder="Image URL (optional) — paste a direct link to a .jpg or .png"
-                className="min-h-[44px] w-full rounded-xl border border-tt-border/80 bg-tt-bg/80 px-3 font-body text-sm text-white outline-none placeholder:text-zinc-600 focus:border-tt-cyan/50"
-                aria-label="Topic image URL"
-              />
-              <div className="flex shrink-0 flex-wrap gap-2">
-                <button
-                  type="button"
-                  className="tt-btn-ghost min-h-[48px] min-w-[48px] px-0"
-                  aria-label="Move up"
-                  disabled={i === 0 || saving || inProgress}
-                  onClick={() => void move(i, -1)}
-                >
-                  ↑
-                </button>
-                <button
-                  type="button"
-                  className="tt-btn-ghost min-h-[48px] min-w-[48px] px-0"
-                  aria-label="Move down"
-                  disabled={i === topics.length - 1 || saving || inProgress}
-                  onClick={() => void move(i, 1)}
-                >
-                  ↓
-                </button>
-                <button
-                  type="button"
-                  className="min-h-[48px] rounded-xl border border-tt-rose/50 px-3 font-stat text-sm text-tt-rose disabled:opacity-50"
-                  disabled={saving || inProgress}
-                  onClick={() => void onDelete(t.id)}
-                >
-                  Delete
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <div className="mt-6 rounded-2xl border border-dashed border-tt-border/80 bg-tt-bg/80 p-4">
-        <p className="font-stat text-sm font-semibold uppercase tracking-wide text-tt-cyan/90">
-          Topic editing ({topics.length}/{MAX_TOPICS})
-        </p>
-        <p className="mt-1 font-body text-xs text-zinc-500">
-          For tile art, use a <strong>direct image link</strong> (ends in .jpg / .png / .webp or a CDN URL that shows only the image). Run the SQL migration{" "}
-          <code className="text-zinc-400">002_topic_image_url.sql</code> in Supabase if you haven&apos;t yet.
-        </p>
-        <input
-          className="mt-3 min-h-[48px] w-full rounded-xl border border-tt-border bg-tt-surface px-3 font-body text-lg text-white outline-none focus:border-tt-cyan/60"
-          placeholder="Topic name, e.g. Liverpool FC"
-          value={newName}
-          disabled={saving || inProgress || topics.length >= MAX_TOPICS}
-          onChange={(e) => setNewName(e.target.value)}
-        />
-        <input
-          className="mt-2 min-h-[44px] w-full rounded-xl border border-tt-border/80 bg-tt-bg/80 px-3 font-body text-sm text-white outline-none placeholder:text-zinc-600 focus:border-tt-cyan/50"
-          placeholder="Optional image URL for the home tile"
-          value={newImageUrl}
-          disabled={saving || inProgress || topics.length >= MAX_TOPICS}
-          onChange={(e) => setNewImageUrl(e.target.value)}
-        />
-        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-          <button
-            type="button"
-            className="tt-btn-primary min-h-[48px] w-full sm:w-auto sm:px-8"
-            disabled={saving || inProgress || topics.length >= MAX_TOPICS}
-            onClick={() => void onAdd()}
-          >
-            Add
-          </button>
-          <button
-            type="button"
-            className="tt-btn-ghost min-h-[48px] w-full sm:w-auto sm:px-8"
-            disabled={saving || generatingKind !== null || inProgress}
-            onClick={() => void onRandomizeTopics()}
-          >
-            {generatingKind === "theme" ? "Generating..." : "Generate 5 From Theme"}
-          </button>
-          <button
-            type="button"
-            className="tt-btn-ghost min-h-[48px] w-full sm:w-auto sm:px-8"
-            disabled={saving || generatingKind !== null || inProgress}
-            onClick={() => void onRandomGiftedTopics()}
-          >
-            {generatingKind === "gifted" ? "Generating..." : "Random 5 (gifted 12)"}
-          </button>
-        </div>
-        <label className="mt-3 flex flex-col gap-1 font-body text-xs text-zinc-500">
-          Theme for related categories
-          <input
-            className="min-h-[44px] rounded-xl border border-tt-border/80 bg-tt-bg/80 px-3 font-body text-sm text-white outline-none placeholder:text-zinc-600 focus:border-tt-cyan/50"
-            placeholder="Example: Space, Marvel, 1980s, Nature"
-            value={themeSeed}
-            disabled={saving || generatingKind !== null || inProgress}
-            onChange={(e) => setThemeSeed(e.target.value)}
-          />
-        </label>
       </div>
     </div>
   );
