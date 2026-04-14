@@ -326,8 +326,8 @@ function QuizFlow() {
         )}
 
         {revealed && (
-          <div className="mt-auto pt-6">
-            <button type="button" className="tt-btn-primary min-h-[52px] w-full sm:max-w-md" onClick={() => void onNext()}>
+          <div className="sticky bottom-2 mt-4 border-t border-tt-border/30 bg-gradient-to-t from-tt-bg via-tt-bg/95 to-transparent pt-3">
+            <button type="button" className="tt-btn-primary min-h-[52px] w-full" onClick={() => void onNext()}>
               {idx >= 9 ? "See Results" : "Next"}
             </button>
           </div>

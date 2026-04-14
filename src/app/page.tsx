@@ -185,7 +185,7 @@ export default function HomePage() {
             <div className="min-w-0">
               <TopicCard
                 title={EXTRA_CREDIT_LABEL}
-                subtitle="Synthesis · 2× points"
+                subtitle="Random bonus topic · 2× points"
                 onClick={() => goTopic(EXTRA_CREDIT_LABEL)}
                 variant="extra"
                 disabled={!playerName || (inProgress && topicIsDone(EXTRA_CREDIT_LABEL))}

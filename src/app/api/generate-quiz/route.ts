@@ -76,10 +76,17 @@ function buildUserPrompt(
   const extra = isExtraCreditTopic(trimmed);
   const topicLine = extra
     ? sessionTopics && sessionTopics.length > 0
-      ? `Round: EXTRA CREDIT (final challenge). The player already completed topic rounds for: ${sessionTopics.map((t) => `"${t.trim()}"`).join(", ")}.
+      ? `Round: EXTRA CREDIT (final challenge).
+The player completed topic rounds for: ${sessionTopics.map((t) => `"${t.trim()}"`).join(", ")}.
 
-Generate 10 NEW questions that connect, compare, or combine knowledge across those topics. At least 7 of the 10 must clearly involve two or more of those topic areas (e.g. “which of these X also relates to Y?”). Do not repeat the exact same fact wording they likely saw earlier in the game—invent fresh stems.`
-      : `Round: EXTRA CREDIT (final challenge). Generate 10 NEW extra-hard synthesis questions. Without a topic list, use challenging cross-domain connections.`
+Choose ONE random topic that is clearly unrelated to those completed topics and build all 10 questions around that one random topic.
+- Do NOT connect questions to the completed topics.
+- Do NOT use a synthesis/crossover format.
+- Keep the random topic coherent so the round feels like a standalone category.`
+      : `Round: EXTRA CREDIT (final challenge).
+Choose ONE random standalone topic and build all 10 questions around it.
+- Do NOT use synthesis/crossover questions.
+- Keep the random topic coherent across all 10 questions.`
     : `Topic: "${trimmed}". All questions must be clearly about this topic.`;
 
   const guidance = extra ? extraCreditDifficultyGuidance(difficulty) : difficultyGuidance(difficulty);
