@@ -28,15 +28,15 @@ body {
   }
 
   .tt-btn-primary {
-    @apply rounded-full border-0 bg-tt-gold px-5 py-2.5 font-stat text-base font-bold text-tt-bg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-tt-gold focus-visible:ring-offset-2 focus-visible:ring-offset-tt-bg active:scale-[0.99] disabled:opacity-50;
+    @apply rounded-full border-0 bg-tt-gold px-4 py-2.5 font-stat text-sm font-bold text-tt-bg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-tt-gold focus-visible:ring-offset-2 focus-visible:ring-offset-tt-bg active:scale-[0.99] disabled:opacity-50 sm:px-5 sm:text-base;
   }
 
   .tt-btn-secondary {
-    @apply rounded-full border border-white/20 bg-transparent px-5 py-2.5 font-stat text-base font-semibold text-white transition focus:outline-none focus-visible:ring-2 focus-visible:ring-tt-gold focus-visible:ring-offset-2 focus-visible:ring-offset-tt-bg active:scale-[0.99];
+    @apply rounded-full border border-white/20 bg-transparent px-4 py-2.5 font-stat text-sm font-semibold text-white transition focus:outline-none focus-visible:ring-2 focus-visible:ring-tt-gold focus-visible:ring-offset-2 focus-visible:ring-offset-tt-bg active:scale-[0.99] sm:px-5 sm:text-base;
   }
 
   .tt-btn-ghost {
-    @apply rounded-full border border-white/20 bg-transparent px-5 py-2.5 font-stat text-base font-semibold text-white transition hover:border-tt-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-tt-gold focus-visible:ring-offset-2 focus-visible:ring-offset-tt-bg;
+    @apply rounded-full border border-white/20 bg-transparent px-4 py-2.5 font-stat text-sm font-semibold text-white transition hover:border-tt-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-tt-gold focus-visible:ring-offset-2 focus-visible:ring-offset-tt-bg sm:px-5 sm:text-base;
   }
 
   .tt-alert {

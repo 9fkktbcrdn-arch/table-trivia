@@ -52,6 +52,11 @@ export default function HomePage() {
   const topicIsDone = (name: string) =>
     completedTopics.includes(name) ||
     (name === EXTRA_CREDIT_LABEL && completedTopics.includes(LEGACY_GENERAL_TRIVIA_NAME));
+  const extraCardTitle =
+    inProgress && currentGameExtraCreditTopic.trim().length > 0 ? currentGameExtraCreditTopic : EXTRA_CREDIT_LABEL;
+  const extraCardSubtitle = inProgress
+    ? "Extra Credit · 2× points"
+    : "Random bonus topic · 2× points";
 
   const goTopic = (name: string) => {
     if (!playerName) return;
@@ -81,7 +86,7 @@ export default function HomePage() {
                 if (confirm("Restart current game? This clears progress.")) resetGame();
               }}
             >
-              Reset
+              Restart
             </button>
           ) : null}
           <Link
@@ -135,23 +140,6 @@ export default function HomePage() {
           </button>
         </div>
       ) : null}
-      {inProgress && completedTopics.length < topicNames.length ? (
-        <div className="mx-4 mt-3 flex items-center justify-between rounded-xl border border-[rgba(245,166,35,0.3)] bg-[rgba(245,166,35,0.12)] px-3 py-2.5 sm:mx-6">
-          <p className="font-body text-sm text-tt-warning">
-            {completedTopics.length}/{topicNames.length} topics complete
-          </p>
-          <button
-            type="button"
-            className="tt-btn-ghost min-h-[40px] px-3"
-            onClick={() => {
-              if (confirm("Restart current game? This clears progress.")) resetGame();
-            }}
-          >
-            Restart
-          </button>
-        </div>
-      ) : null}
-
       {!supabaseOk && (
         <div className="border-b border-[rgba(245,166,35,0.3)] bg-[rgba(245,166,35,0.12)] px-4 py-2.5 sm:px-6">
           <p className="font-body text-xs leading-snug text-tt-warning sm:text-sm">
@@ -192,8 +180,8 @@ export default function HomePage() {
 
             <div className="min-w-0">
               <TopicCard
-                title={EXTRA_CREDIT_LABEL}
-                subtitle={`${inProgress && currentGameExtraCreditTopic ? currentGameExtraCreditTopic : "Random bonus topic"} · 2× points`}
+                title={extraCardTitle}
+                subtitle={extraCardSubtitle}
                 onClick={() => goTopic(EXTRA_CREDIT_LABEL)}
                 variant="extra"
                 disabled={!playerName || (inProgress && topicIsDone(EXTRA_CREDIT_LABEL))}

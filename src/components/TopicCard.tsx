@@ -69,7 +69,7 @@ export function TopicCard({ title, subtitle, onClick, variant = "topic", disable
         {variant === "general"
           ? "⭐"
           : variant === "extra"
-            ? "🎓"
+            ? null
             : variant === "create"
               ? "✏️"
               : showImage
@@ -86,7 +86,7 @@ export function TopicCard({ title, subtitle, onClick, variant = "topic", disable
         {title}
       </span>
       {subtitle ? (
-        <span className="relative z-10 mt-auto line-clamp-1 pt-1 font-body text-[11px] tracking-wide text-tt-subtle sm:text-xs">
+        <span className="relative z-10 mt-auto line-clamp-2 min-h-[2rem] pt-1 font-body text-[11px] leading-snug tracking-wide text-tt-subtle sm:text-xs">
           {subtitle}
         </span>
       ) : (
