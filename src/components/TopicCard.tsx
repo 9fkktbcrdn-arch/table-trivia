@@ -15,13 +15,14 @@ interface TopicCardProps {
   completed?: boolean;
 }
 
-const ICON_ROW = "relative z-10 flex h-8 shrink-0 items-center justify-center text-xl leading-none";
+const ICON_ROW = "relative z-10 flex h-4 shrink-0 items-center justify-center text-xl leading-none sm:h-8";
 
 export function TopicCard({ title, subtitle, onClick, variant = "topic", disabled, imageUrl, completed }: TopicCardProps) {
   const isEmpty = variant === "empty";
   const trimmedUrl = imageUrl?.trim() ?? "";
   const compactTitle = title.length > 16;
   const veryLongTitle = title.length > 24;
+  const ultraLongTitle = title.length > 34;
   /** URL that failed to load — hide image until the URL changes. */
   const [failedUrl, setFailedUrl] = useState("");
   const showImage =
@@ -77,11 +78,18 @@ export function TopicCard({ title, subtitle, onClick, variant = "topic", disable
                 : <span className="opacity-0">·</span>}
       </div>
       <span
-        className={`relative z-10 line-clamp-2 min-h-[2.45rem] font-stat font-bold leading-tight tracking-[-0.01em] [text-wrap:balance] sm:min-h-[2.7rem] ${
-          veryLongTitle ? "text-[0.9rem] sm:text-[1.02rem]" : compactTitle ? "text-[0.96rem] sm:text-[1.08rem]" : "text-[1.02rem] sm:text-[1.16rem]"
+        className={`relative z-10 min-h-[2.7rem] font-stat font-bold leading-tight tracking-[-0.01em] [text-wrap:balance] sm:min-h-[3rem] ${
+          ultraLongTitle
+            ? "text-[0.8rem] sm:text-[0.9rem]"
+            : veryLongTitle
+              ? "text-[0.86rem] sm:text-[1rem]"
+              : compactTitle
+                ? "text-[0.92rem] sm:text-[1.06rem]"
+                : "text-[1rem] sm:text-[1.14rem]"
         } ${
           isEmpty ? "text-tt-faint" : "text-white"
         }`}
+        style={{ overflowWrap: "anywhere" }}
       >
         {title}
       </span>
