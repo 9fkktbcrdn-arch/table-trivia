@@ -15,8 +15,6 @@ interface TopicCardProps {
   completed?: boolean;
 }
 
-const ICON_ROW = "relative z-10 flex h-4 shrink-0 items-center justify-center text-xl leading-none sm:h-8";
-
 export function TopicCard({ title, subtitle, onClick, variant = "topic", disabled, imageUrl, completed }: TopicCardProps) {
   const isEmpty = variant === "empty";
   const trimmedUrl = imageUrl?.trim() ?? "";
@@ -34,7 +32,7 @@ export function TopicCard({ title, subtitle, onClick, variant = "topic", disable
       disabled={disabled || isEmpty}
       onClick={onClick}
       className={[
-        "relative flex h-[124px] w-full flex-col overflow-hidden rounded-2xl border px-3.5 py-3.5 text-center transition duration-150 sm:h-[144px] sm:px-4 sm:py-4 md:h-[156px]",
+        "relative flex h-[124px] w-full items-center justify-center overflow-hidden rounded-2xl border px-3.5 py-3.5 text-center transition duration-150 sm:h-[144px] sm:px-4 sm:py-4 md:h-[156px]",
         isEmpty
           ? "cursor-default border-white/10 bg-tt-surface text-tt-faint"
           : showImage
@@ -66,40 +64,27 @@ export function TopicCard({ title, subtitle, onClick, variant = "topic", disable
         </>
       ) : null}
 
-      <div className={ICON_ROW} aria-hidden>
-        {variant === "general"
-          ? "⭐"
-          : variant === "extra"
-            ? null
-            : variant === "create"
-              ? "✏️"
-              : showImage
-                ? null
-                : <span className="opacity-0">·</span>}
-      </div>
-      <span
-        className={`relative z-10 min-h-[2.7rem] font-stat font-bold leading-tight tracking-[-0.01em] [text-wrap:balance] sm:min-h-[3rem] ${
-          ultraLongTitle
-            ? "text-[0.8rem] sm:text-[0.9rem]"
-            : veryLongTitle
-              ? "text-[0.86rem] sm:text-[1rem]"
-              : compactTitle
-                ? "text-[0.92rem] sm:text-[1.06rem]"
-                : "text-[1rem] sm:text-[1.14rem]"
-        } ${
-          isEmpty ? "text-tt-faint" : "text-white"
-        }`}
-        style={{ overflowWrap: "anywhere" }}
-      >
-        {title}
-      </span>
-      {subtitle ? (
-        <span className="relative z-10 mt-auto line-clamp-2 min-h-[1.8rem] pt-1 font-body text-[10px] leading-snug text-tt-subtle sm:min-h-[2rem] sm:text-xs">
-          {subtitle}
+      <div className="relative z-10 flex w-full max-w-[95%] flex-col items-center justify-center gap-1 text-center">
+        <span
+          className={`font-stat font-bold leading-tight tracking-[-0.01em] [text-wrap:balance] ${
+            ultraLongTitle
+              ? "text-[0.8rem] sm:text-[0.9rem]"
+              : veryLongTitle
+                ? "text-[0.86rem] sm:text-[1rem]"
+                : compactTitle
+                  ? "text-[0.92rem] sm:text-[1.06rem]"
+                  : "text-[1rem] sm:text-[1.14rem]"
+          } ${
+            isEmpty ? "text-tt-faint" : "text-white"
+          }`}
+          style={{ overflowWrap: "anywhere" }}
+        >
+          {title}
         </span>
-      ) : (
-        <span className="relative z-10 mt-auto h-4 shrink-0 sm:h-4" aria-hidden />
-      )}
+        {subtitle ? (
+          <span className="line-clamp-2 font-body text-[10px] leading-snug text-tt-subtle sm:text-xs">{subtitle}</span>
+        ) : null}
+      </div>
     </button>
   );
 }

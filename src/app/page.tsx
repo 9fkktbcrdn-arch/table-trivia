@@ -65,7 +65,7 @@ export default function HomePage() {
         <div className="min-w-0">
           <h1 className="tt-heading-xl">Quiz Monster</h1>
           <p className="mt-1 max-w-[220px] font-body text-sm text-tt-subtle sm:max-w-none sm:text-sm">
-            {inProgress ? `Game in progress for ${playerName}. Finish all topics.` : "Pick a topic to start a round."}
+            {inProgress ? "Game in progress. Finish all topics." : "Pick a topic to start a round."}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
