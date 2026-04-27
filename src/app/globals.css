@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Syne:wght@600;700;800&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -12,11 +13,9 @@ body {
   padding: 0;
   overscroll-behavior: none;
   touch-action: manipulation;
-  background:
-    radial-gradient(120% 95% at 50% -10%, rgba(177, 140, 255, 0.25), transparent 50%),
-    radial-gradient(95% 70% at 50% 110%, rgba(255, 210, 77, 0.2), transparent 55%),
-    linear-gradient(180deg, #060a1f 0%, #081241 45%, #060a1f 100%);
-  color: #f5e6c8;
+  background: #1a1915;
+  color: #fff8e7;
+  font-family: "Inter", system-ui, sans-serif;
 }
 
 * {
@@ -29,14 +28,21 @@ body {
   }
 
   .tt-btn-primary {
-    @apply rounded-xl border-2 border-tt-amber/85 bg-gradient-to-b from-[#254ed9] via-[#173597] to-[#11256c] px-5 py-2 font-stat text-lg font-bold text-white shadow-[0_12px_28px_rgba(10,20,70,0.55)] transition hover:border-tt-cyan hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-tt-amber/70 focus-visible:ring-offset-2 focus-visible:ring-offset-tt-bg active:scale-[0.99] disabled:opacity-50;
+    @apply rounded-full border-0 bg-tt-gold px-5 py-2.5 font-stat text-base font-bold text-tt-bg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-tt-gold focus-visible:ring-offset-2 focus-visible:ring-offset-tt-bg active:scale-[0.99] disabled:opacity-50;
   }
 
   .tt-btn-secondary {
-    @apply rounded-xl border-2 border-tt-border bg-gradient-to-b from-[#1a358f] to-[#10296f] px-5 py-2 font-stat text-lg font-semibold text-parchment transition hover:border-tt-cyan/70 hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-tt-cyan/50 focus-visible:ring-offset-2 focus-visible:ring-offset-tt-bg active:scale-[0.99];
+    @apply rounded-full border border-white/20 bg-transparent px-5 py-2.5 font-stat text-base font-semibold text-white transition focus:outline-none focus-visible:ring-2 focus-visible:ring-tt-gold focus-visible:ring-offset-2 focus-visible:ring-offset-tt-bg active:scale-[0.99];
   }
 
   .tt-btn-ghost {
-    @apply rounded-xl border border-transparent px-2 py-1 font-stat text-lg text-tt-amber transition hover:bg-white/5 hover:text-tt-cyan focus:outline-none focus-visible:ring-2 focus-visible:ring-tt-cyan/45 focus-visible:ring-offset-2 focus-visible:ring-offset-tt-bg;
+    @apply rounded-full border border-white/20 bg-transparent px-5 py-2.5 font-stat text-base font-semibold text-white transition hover:border-tt-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-tt-gold focus-visible:ring-offset-2 focus-visible:ring-offset-tt-bg;
+  }
+
+  .tt-alert {
+    @apply rounded-lg border px-3 py-2 text-[13px];
+    background: rgba(232, 64, 64, 0.12);
+    border-color: rgba(232, 64, 64, 0.3);
+    color: #ff8080;
   }
 }

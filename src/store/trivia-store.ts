@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { EXTRA_CREDIT_RANDOM_TOPIC_POOL } from "@/lib/trivia-constants";
 import type { GameMode } from "@/lib/types";
 
 type PlayerCode = "KJC" | "CHC" | "GUEST";
@@ -18,6 +19,7 @@ interface TriviaStore {
   totalMaxPoints: number;
   currentGameEstimatedCostUsd: number;
   currentGameSeed: string;
+  currentGameExtraCreditTopic: string;
   startGame: (topics: string[]) => void;
   completeTopic: (topic: string, points: number, correct: number, maxPoints: number) => void;
   resetGame: () => void;
@@ -51,6 +53,7 @@ export const useTriviaStore = create<TriviaStore>()(
       totalMaxPoints: 0,
       currentGameEstimatedCostUsd: 0,
       currentGameSeed: "",
+      currentGameExtraCreditTopic: "",
       startGame: (topics) =>
         set({
           inProgress: true,
@@ -64,6 +67,9 @@ export const useTriviaStore = create<TriviaStore>()(
             typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
               ? crypto.randomUUID()
               : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+          currentGameExtraCreditTopic:
+            EXTRA_CREDIT_RANDOM_TOPIC_POOL[Math.floor(Math.random() * EXTRA_CREDIT_RANDOM_TOPIC_POOL.length)] ??
+            "General Knowledge",
         }),
       completeTopic: (topic, points, correct, maxPoints) =>
         set((state) => {
@@ -85,6 +91,7 @@ export const useTriviaStore = create<TriviaStore>()(
           totalMaxPoints: 0,
           currentGameEstimatedCostUsd: 0,
           currentGameSeed: "",
+          currentGameExtraCreditTopic: "",
         }),
       totalInputTokens: 0,
       totalOutputTokens: 0,
@@ -126,6 +133,7 @@ export const useTriviaStore = create<TriviaStore>()(
         totalMaxPoints: state.totalMaxPoints,
         currentGameEstimatedCostUsd: state.currentGameEstimatedCostUsd,
         currentGameSeed: state.currentGameSeed,
+        currentGameExtraCreditTopic: state.currentGameExtraCreditTopic,
         totalInputTokens: state.totalInputTokens,
         totalOutputTokens: state.totalOutputTokens,
         totalEstimatedCostUsd: state.totalEstimatedCostUsd,

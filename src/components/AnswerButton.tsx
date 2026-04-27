@@ -11,16 +11,16 @@ interface AnswerButtonProps {
 export function AnswerButton({ label, index, onClick, state, disabled }: AnswerButtonProps) {
   const letter = String.fromCharCode(65 + index);
   const base =
-    "min-h-[52px] w-full rounded-xl border-2 px-4 py-3 text-left font-body text-lg font-medium leading-snug transition duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-tt-cyan/45 focus-visible:ring-offset-2 focus-visible:ring-offset-tt-bg sm:min-h-[56px] sm:text-xl";
+    "min-h-[52px] w-full rounded-xl border px-3.5 py-2.5 text-left font-body text-sm font-medium leading-snug transition duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-tt-gold focus-visible:ring-offset-2 focus-visible:ring-offset-tt-bg";
 
   const styles =
     state === "correct"
-      ? "border-tt-lime bg-tt-lime/20 text-white shadow-[0_0_24px_rgba(139,245,141,0.45)]"
+      ? "border-tt-success bg-[rgba(45,184,122,0.16)] text-white"
       : state === "incorrect"
-        ? "border-tt-rose bg-tt-rose/20 text-parchment/90 shadow-[0_10px_22px_rgba(244,63,94,0.24)]"
+        ? "border-tt-error bg-[rgba(232,64,64,0.16)] text-white"
         : state === "revealed-correct"
-          ? "border-tt-lime/90 bg-tt-lime/25 text-white shadow-[0_10px_22px_rgba(139,245,141,0.3)]"
-          : "border-tt-border bg-gradient-to-b from-[#1b3bb3] to-[#112b7f] text-parchment hover:-translate-y-0.5 hover:border-tt-amber/80 hover:brightness-110 hover:shadow-[0_12px_24px_rgba(12,30,100,0.45)]";
+          ? "border-tt-success bg-[rgba(45,184,122,0.12)] text-white"
+          : "border-white/10 bg-tt-surface-mid text-white hover:border-tt-gold";
 
   return (
     <button
@@ -29,8 +29,10 @@ export function AnswerButton({ label, index, onClick, state, disabled }: AnswerB
       onClick={onClick}
       className={`${base} ${styles}`}
     >
-      <span className="font-stat text-tt-amber">{letter}.</span>{" "}
-      <span className="text-parchment">{label}</span>
+      <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[rgba(212,160,23,0.15)] font-stat text-[12px] font-bold text-tt-gold">
+        {letter}
+      </span>
+      <span className="text-white">{label}</span>
     </button>
   );
 }

@@ -203,32 +203,32 @@ export default function SettingsPage() {
 
   return (
     <div className="tt-screen flex min-h-dvh flex-col bg-tt-bg px-4 pb-10 pt-5 sm:px-6">
-      <header className="mb-5 flex items-center gap-3 rounded-2xl border border-tt-border/60 bg-tt-surface/55 px-3 py-2.5">
+      <header className="mb-5 flex items-center gap-3 rounded-2xl border border-[rgba(212,160,23,0.2)] bg-tt-surface px-3 py-2.5">
         <Link href="/" className="tt-btn-ghost min-h-[48px] min-w-[48px] px-2">
           ←
         </Link>
         <div>
-          <h1 className="font-stat text-2xl font-bold text-white">Topic Manager</h1>
-          <p className="font-body text-sm text-zinc-500">Saved on Supabase for every device.</p>
+          <h1 className="font-stat text-[18px] font-bold text-white">Topic Manager</h1>
+          <p className="font-body text-sm text-tt-subtle">Saved on Supabase for every device.</p>
         </div>
       </header>
       {inProgress ? (
-        <p className="mb-4 rounded-xl border border-amber-500/40 bg-amber-950/25 px-3 py-2 text-sm text-amber-100">
+        <p className="mb-4 rounded-lg border border-[rgba(245,166,35,0.3)] bg-[rgba(245,166,35,0.12)] px-3 py-2 text-[13px] text-tt-warning">
           A game is currently in progress. Finish all topics before changing the list.
         </p>
       ) : null}
       {notice ? (
-        <p className="mb-4 rounded-xl border border-tt-cyan/25 bg-tt-surface/70 px-3 py-2 text-sm text-zinc-200">{notice}</p>
+        <p className="tt-alert mb-4">{notice}</p>
       ) : null}
 
       {loading ? (
-        <p className="text-zinc-500">Loading…</p>
+        <p className="text-tt-subtle">Loading…</p>
       ) : (
         <ul className="flex flex-col gap-4">
           {topics.map((t) => (
             <li
               key={t.id}
-              className="rounded-2xl border border-tt-border bg-tt-surface/90 p-3 sm:p-4"
+              className="rounded-2xl border border-[rgba(212,160,23,0.2)] bg-tt-surface p-4"
             >
               <div className="flex items-center gap-2">
                 <input
@@ -239,12 +239,12 @@ export default function SettingsPage() {
                     const v = e.target.value.trim();
                     if (v && v !== t.name) void onRename(t.id, v);
                   }}
-                  className="min-h-[42px] w-full rounded-xl border border-tt-border bg-tt-bg px-3 font-body text-base text-white outline-none focus:border-tt-cyan/60"
+                  className="min-h-[42px] w-full rounded-xl border border-white/10 bg-tt-surface-mid px-3 font-body text-sm text-white outline-none focus:border-tt-gold"
                   aria-label="Topic name"
                 />
                 <button
                   type="button"
-                  className="min-h-[34px] shrink-0 rounded-lg border border-tt-rose/50 px-2.5 font-stat text-xs text-tt-rose disabled:opacity-50"
+                  className="min-h-[34px] shrink-0 rounded-full border border-[rgba(232,64,64,0.3)] px-3 font-stat text-xs font-semibold text-tt-error disabled:opacity-50"
                   disabled={saving || inProgress}
                   onClick={() => void onDelete(t.id)}
                 >
@@ -256,23 +256,23 @@ export default function SettingsPage() {
         </ul>
       )}
 
-      <div className="mt-6 rounded-2xl border border-dashed border-tt-border/80 bg-tt-bg/80 p-4">
-        <p className="font-stat text-sm font-semibold uppercase tracking-wide text-tt-cyan/90">
+      <div className="mt-6 rounded-2xl border border-[rgba(212,160,23,0.2)] bg-tt-surface p-4">
+        <p className="font-body text-[11px] font-semibold uppercase tracking-[0.08em] text-tt-subtle">
           Topic generator
         </p>
-        <p className="mt-1 font-body text-xs text-zinc-500">
+        <p className="mt-1 font-body text-xs text-tt-subtle">
           Edit topic names directly in the text boxes above, or generate a fresh set below.
         </p>
 
-        <div className="mt-3 rounded-xl border border-tt-border/80 bg-tt-surface/40 p-3">
-          <p className="font-stat text-xs uppercase tracking-wide text-zinc-400">Generate 5 topics</p>
+        <div className="mt-3 rounded-2xl border border-[rgba(212,160,23,0.2)] bg-tt-surface-mid p-4">
+          <p className="font-body text-[11px] font-semibold uppercase tracking-[0.08em] text-tt-subtle">Generate 5 topics</p>
           <div className="mt-2 grid grid-cols-2 gap-2">
             <button
               type="button"
               className={`min-h-[44px] rounded-xl border px-3 font-stat text-sm transition ${
                 topicGeneratorMode === "theme"
-                  ? "border-tt-cyan/70 bg-tt-cyan/15 text-tt-cyan"
-                  : "border-tt-border/80 bg-tt-bg/70 text-zinc-300 hover:border-tt-cyan/40"
+                  ? "border-tt-gold bg-[rgba(212,160,23,0.15)] text-tt-gold-bright"
+                  : "border-white/20 bg-transparent text-white hover:border-tt-gold"
               }`}
               disabled={saving || generatingKind !== null || inProgress}
               onClick={() => setTopicGeneratorMode("theme")}
@@ -283,8 +283,8 @@ export default function SettingsPage() {
               type="button"
               className={`min-h-[44px] rounded-xl border px-3 font-stat text-sm transition ${
                 topicGeneratorMode === "random"
-                  ? "border-tt-cyan/70 bg-tt-cyan/15 text-tt-cyan"
-                  : "border-tt-border/80 bg-tt-bg/70 text-zinc-300 hover:border-tt-cyan/40"
+                  ? "border-tt-gold bg-[rgba(212,160,23,0.15)] text-tt-gold-bright"
+                  : "border-white/20 bg-transparent text-white hover:border-tt-gold"
               }`}
               disabled={saving || generatingKind !== null || inProgress}
               onClick={() => setTopicGeneratorMode("random")}
@@ -295,11 +295,11 @@ export default function SettingsPage() {
 
           {topicGeneratorMode === "theme" ? (
             <div className="mt-3">
-              <div className="rounded-lg border border-tt-border/70 bg-tt-bg/40 px-3 py-2">
-                <p className="font-body text-xs text-zinc-400">Theme</p>
+              <div className="rounded-xl border border-white/10 bg-tt-surface px-3 py-2">
+                <p className="font-body text-xs text-tt-subtle">Theme</p>
               </div>
               <input
-                className="mt-2 min-h-[44px] w-full rounded-xl border border-tt-border/80 bg-tt-bg/80 px-3 font-body text-sm text-white outline-none placeholder:text-zinc-600 focus:border-tt-cyan/50"
+                className="mt-2 min-h-[44px] w-full rounded-xl border border-white/10 bg-tt-surface px-3 font-body text-sm text-white outline-none placeholder:text-tt-faint focus:border-tt-gold"
                 placeholder="Example: Space, Marvel, 1980s, Nature"
                 value={themeSeed}
                 disabled={saving || generatingKind !== null || inProgress}
@@ -307,7 +307,7 @@ export default function SettingsPage() {
               />
               <button
                 type="button"
-                className="mt-3 min-h-[44px] w-full rounded-xl border border-tt-cyan/70 bg-tt-cyan/15 px-3 font-stat text-sm text-tt-cyan transition hover:bg-tt-cyan/20 disabled:opacity-50 sm:mx-auto sm:block sm:w-[220px]"
+                className="mt-3 min-h-[44px] w-full rounded-full border border-white/20 bg-transparent px-5 py-2.5 font-stat text-sm font-semibold text-white transition hover:border-tt-gold disabled:opacity-50 sm:mx-auto sm:block sm:w-[220px]"
                 disabled={saving || generatingKind !== null || inProgress}
                 onClick={() => void onGenerateThemeTopics()}
               >
@@ -316,11 +316,11 @@ export default function SettingsPage() {
             </div>
           ) : (
             <div className="mt-3">
-              <div className="flex items-center justify-between gap-2 rounded-lg border border-tt-border/70 bg-tt-bg/40 px-3 py-2">
-                <p className="font-body text-xs text-zinc-400">Aimed for</p>
+              <div className="flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-tt-surface px-3 py-2">
+                <p className="font-body text-xs text-tt-subtle">Aimed for</p>
                 <button
                   type="button"
-                  className="rounded-md border border-tt-border/80 bg-tt-surface/70 px-2 py-1 font-stat text-[11px] uppercase tracking-wide text-zinc-200 hover:border-tt-cyan/60"
+                  className="rounded-full border border-white/20 bg-transparent px-3 py-1 font-stat text-[11px] font-semibold uppercase tracking-[0.08em] text-white hover:border-tt-gold"
                   disabled={saving || generatingKind !== null || inProgress}
                   onClick={() => {
                     const next: RandomTarget = randomTarget === "gifted12" ? "middle-school" : "gifted12";
@@ -335,7 +335,7 @@ export default function SettingsPage() {
               </div>
               <button
                 type="button"
-                className="mt-3 min-h-[44px] w-full rounded-xl border border-tt-cyan/70 bg-tt-cyan/15 px-3 font-stat text-sm text-tt-cyan transition hover:bg-tt-cyan/20 disabled:opacity-50 sm:mx-auto sm:block sm:w-[220px]"
+                className="mt-3 min-h-[44px] w-full rounded-full border border-white/20 bg-transparent px-5 py-2.5 font-stat text-sm font-semibold text-white transition hover:border-tt-gold disabled:opacity-50 sm:mx-auto sm:block sm:w-[220px]"
                 disabled={saving || generatingKind !== null || inProgress}
                 onClick={() => void onRandomGiftedTopics()}
               >
@@ -346,44 +346,44 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="mt-6 rounded-2xl border border-tt-border bg-tt-surface/80 p-4">
-        <p className="font-stat text-sm font-semibold uppercase tracking-wide text-tt-cyan/90">AI token usage</p>
+      <div className="mt-6 rounded-2xl border border-[rgba(212,160,23,0.2)] bg-tt-surface p-4">
+        <p className="font-body text-[11px] font-semibold uppercase tracking-[0.08em] text-tt-subtle">AI token usage</p>
         {usageLoading ? (
-          <p className="mt-1 font-body text-xs text-zinc-500">Loading…</p>
+          <p className="mt-1 font-body text-xs text-tt-subtle">Loading…</p>
         ) : supabaseOk && cloudUsage ? (
           <>
-            <p className="mt-1 font-body text-xs text-zinc-400">
+            <p className="mt-1 font-body text-xs text-tt-subtle">
               All devices (Supabase): Input {cloudUsage.inputTokens.toLocaleString()} · Output{" "}
               {cloudUsage.outputTokens.toLocaleString()}
             </p>
-            <p className="mt-1 font-body text-sm text-zinc-200">
+            <p className="mt-1 font-body text-sm text-white">
               Estimated spend: ${cloudUsage.estimatedCostUsd.toFixed(4)}
             </p>
           </>
         ) : supabaseOk && cloudUsage === null ? (
           <>
-            <p className="mt-1 font-body text-xs text-amber-200/90">
+            <p className="mt-1 font-body text-xs text-tt-warning">
               Couldn&apos;t load synced totals. Check the <code className="text-zinc-400">usage_events</code> table and
               migration.
             </p>
-            <p className="mt-1 font-body text-xs text-zinc-400">
+            <p className="mt-1 font-body text-xs text-tt-subtle">
               This browser only: Input {totalInputTokens.toLocaleString()} · Output{" "}
               {totalOutputTokens.toLocaleString()}
             </p>
-            <p className="mt-1 font-body text-sm text-zinc-200">
+            <p className="mt-1 font-body text-sm text-white">
               Estimated spend: ${totalEstimatedCostUsd.toFixed(4)}
             </p>
           </>
         ) : (
           <>
-            <p className="mt-1 font-body text-xs text-zinc-400">
+            <p className="mt-1 font-body text-xs text-tt-subtle">
               This browser only: Input {totalInputTokens.toLocaleString()} · Output{" "}
               {totalOutputTokens.toLocaleString()}
             </p>
-            <p className="mt-1 font-body text-sm text-zinc-200">
+            <p className="mt-1 font-body text-sm text-white">
               Estimated spend: ${totalEstimatedCostUsd.toFixed(4)}
             </p>
-            <p className="mt-2 font-body text-xs text-zinc-500">
+            <p className="mt-2 font-body text-xs text-tt-subtle">
               Add Supabase env vars and run migration <code className="text-zinc-400">003_usage_events.sql</code> to
               sync totals across phones and laptops.
             </p>

@@ -31,13 +31,13 @@ export function QuizQuestion({
     question.questionDifficulty === "easy" ? "Easy" : question.questionDifficulty === "medium" ? "Medium" : "Hard";
   return (
     <div className="flex w-full max-w-xl flex-col gap-6">
-      <p className="font-stat text-sm font-semibold uppercase tracking-widest text-tt-cyan/90">
+      <p className="font-body text-[11px] font-semibold uppercase tracking-[0.08em] text-tt-subtle">
         Question {index + 1} of {total}
       </p>
-      <p className="font-body text-xs uppercase tracking-wider text-zinc-500">
+      <p className="font-body text-[11px] font-semibold uppercase tracking-[0.08em] text-tt-subtle">
         {extraCredit ? `Extra Credit · ${difficultyLabel}` : difficultyLabel}
       </p>
-      <h2 className="font-stat text-xl font-bold leading-snug text-white sm:text-2xl">{question.question}</h2>
+      <h2 className="font-stat text-[16px] font-bold leading-snug text-white">{question.question}</h2>
       <div className="grid grid-cols-1 gap-3">
         {question.answers.map((label, i) => {
           let state: "idle" | "correct" | "incorrect" | "revealed-correct" = "idle";
@@ -64,22 +64,22 @@ export function QuizQuestion({
       selectedIndex !== question.correctIndex &&
       question.explanation.trim() ? (
         <div
-          className="rounded-xl border border-tt-cyan/25 bg-tt-cyan/5 px-4 py-3"
+          className="rounded-xl border border-[rgba(212,160,23,0.2)] bg-tt-surface-mid px-4 py-3"
           role="note"
           aria-live="polite"
         >
-          <p className="font-stat text-xs font-semibold uppercase tracking-wider text-tt-cyan/90">Why it&apos;s right</p>
-          <p className="mt-1.5 font-body text-sm leading-relaxed text-zinc-200">{question.explanation}</p>
+          <p className="font-body text-[11px] font-semibold uppercase tracking-[0.08em] text-tt-subtle">Why it&apos;s right</p>
+          <p className="mt-1.5 font-body text-sm leading-relaxed text-white">{question.explanation}</p>
         </div>
       ) : null}
 
       {onReportIssue ? (
-        <div className="mt-2 border-t border-tt-border/40 pt-3">
+        <div className="mt-2 border-t border-white/10 pt-3">
           <button
             type="button"
             onClick={onReportIssue}
             disabled={issueReported}
-            className="font-body text-xs text-zinc-500 underline decoration-zinc-600 underline-offset-2 transition hover:text-zinc-300 disabled:cursor-default disabled:no-underline disabled:text-zinc-600"
+            className="font-body text-xs text-tt-subtle underline decoration-tt-faint underline-offset-2 transition hover:text-white disabled:cursor-default disabled:no-underline disabled:text-tt-faint"
           >
             {issueReported ? "Saved on this device for review" : "Problem with this question?"}
           </button>

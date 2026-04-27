@@ -21,7 +21,7 @@ export function QuizLoading() {
         }
         return next;
       });
-    }, 5000);
+    }, 10000);
     return () => clearInterval(t);
   }, []);
 
@@ -32,9 +32,9 @@ export function QuizLoading() {
         animate={{ rotate: 360 }}
         transition={{ repeat: Infinity, duration: 1.1, ease: "linear" }}
       >
-        <div className="absolute inset-0 rounded-full border-4 border-tt-border" />
-        <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-tt-cyan border-r-tt-magenta" />
-        <div className="absolute inset-2 rounded-full bg-tt-surface/80" />
+        <div className="absolute inset-0 rounded-full border-4 border-white/10" />
+        <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-tt-gold border-r-tt-gold-bright" />
+        <div className="absolute inset-2 rounded-full bg-tt-surface" />
         <motion.span
           className="absolute inset-0 flex items-center justify-center text-2xl"
           animate={{ scale: [1, 1.08, 1] }}
@@ -44,12 +44,12 @@ export function QuizLoading() {
           ?
         </motion.span>
       </motion.div>
-      <p className="max-w-[280px] text-center font-stat text-lg text-tt-cyan/95">{LOADING_MESSAGES[i]}</p>
+      <p className="max-w-[280px] text-center font-stat text-[18px] text-tt-gold-bright">{LOADING_MESSAGES[i]}</p>
       <motion.p
         key={jokeIndex}
         initial={{ opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-[320px] text-center font-body text-sm text-zinc-300/95"
+        className="max-w-[320px] text-center font-body text-sm text-tt-subtle"
       >
         {LOADING_JOKES[jokeIndex]}
       </motion.p>

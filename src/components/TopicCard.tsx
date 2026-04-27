@@ -15,7 +15,7 @@ interface TopicCardProps {
   completed?: boolean;
 }
 
-const ICON_ROW = "relative z-10 flex h-8 shrink-0 items-center justify-center text-xl leading-none drop-shadow-md";
+const ICON_ROW = "relative z-10 flex h-8 shrink-0 items-center justify-center text-xl leading-none";
 
 export function TopicCard({ title, subtitle, onClick, variant = "topic", disabled, imageUrl, completed }: TopicCardProps) {
   const isEmpty = variant === "empty";
@@ -33,12 +33,12 @@ export function TopicCard({ title, subtitle, onClick, variant = "topic", disable
       disabled={disabled || isEmpty}
       onClick={onClick}
       className={[
-        "relative flex h-[132px] w-full flex-col overflow-hidden rounded-2xl border px-3 py-3 text-center shadow-md transition duration-150 sm:h-[144px] sm:px-4 md:h-[156px]",
+        "relative flex h-[132px] w-full flex-col overflow-hidden rounded-2xl border px-4 py-4 text-center transition duration-150 sm:h-[144px] md:h-[156px]",
         isEmpty
-          ? "cursor-default border-tt-border/50 bg-tt-surface/30 text-zinc-500"
+          ? "cursor-default border-white/10 bg-tt-surface text-tt-faint"
           : showImage
-            ? "border-white/20 shadow-[0_10px_22px_rgba(0,0,0,0.25)] active:scale-[0.98] active:border-white/30"
-            : "border-tt-border/90 bg-gradient-to-b from-[#1b3dbe] via-[#142f95] to-[#0a1b56] text-parchment shadow-[0_10px_20px_rgba(7,14,50,0.5)] hover:-translate-y-0.5 hover:border-tt-amber/80 hover:shadow-[0_14px_28px_rgba(14,30,100,0.55)] active:scale-[0.98] active:border-tt-cyan/50",
+            ? "border-[rgba(212,160,23,0.2)] active:scale-[0.98]"
+            : "border-[rgba(212,160,23,0.2)] bg-tt-surface text-parchment hover:border-tt-gold active:scale-[0.98]",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -52,18 +52,15 @@ export function TopicCard({ title, subtitle, onClick, variant = "topic", disable
             className="absolute inset-0 h-full w-full object-cover"
             onError={() => setFailedUrl(trimmedUrl)}
           />
-          <div
-            className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/25"
-            aria-hidden
-          />
+          <div className="absolute inset-0 bg-black/35" aria-hidden />
         </>
       )}
       {completed ? (
         <>
-          <div className="pointer-events-none absolute inset-0 z-20 bg-emerald-950/35" />
-          <div className="pointer-events-none absolute right-2 top-2 z-30 inline-flex items-center gap-1 rounded-full border border-emerald-300/50 bg-emerald-500/20 px-2 py-1 backdrop-blur-sm">
-            <span className="font-stat text-sm leading-none text-emerald-200">✓</span>
-            <span className="font-stat text-[10px] uppercase tracking-wide text-emerald-100/95">Done</span>
+          <div className="pointer-events-none absolute inset-0 z-20 bg-[rgba(45,184,122,0.14)]" />
+          <div className="pointer-events-none absolute right-2 top-2 z-30 inline-flex items-center gap-1 rounded-full border border-[rgba(45,184,122,0.35)] bg-[rgba(45,184,122,0.18)] px-2 py-1">
+            <span className="font-stat text-sm leading-none text-tt-success">✓</span>
+            <span className="font-body text-[11px] font-medium uppercase tracking-[0.08em] text-[#C9F2DE]">Done</span>
           </div>
         </>
       ) : null}
@@ -80,16 +77,16 @@ export function TopicCard({ title, subtitle, onClick, variant = "topic", disable
                 : <span className="opacity-0">·</span>}
       </div>
       <span
-        className={`relative z-10 line-clamp-2 min-h-[2.6rem] font-stat font-bold leading-tight tracking-tight [text-wrap:balance] drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] sm:min-h-[2.7rem] ${
+        className={`relative z-10 line-clamp-2 min-h-[2.6rem] font-stat font-bold leading-tight tracking-tight [text-wrap:balance] sm:min-h-[2.7rem] ${
           veryLongTitle ? "text-[0.94rem] sm:text-[1.02rem]" : compactTitle ? "text-[1rem] sm:text-[1.08rem]" : "text-[1.06rem] sm:text-[1.16rem]"
         } ${
-          isEmpty ? "text-zinc-500" : "text-white"
+          isEmpty ? "text-tt-faint" : "text-white"
         }`}
       >
         {title}
       </span>
       {subtitle ? (
-        <span className="relative z-10 mt-auto line-clamp-1 pt-1 font-body text-[11px] tracking-wide text-zinc-300/95 drop-shadow-md sm:text-xs">
+        <span className="relative z-10 mt-auto line-clamp-1 pt-1 font-body text-[11px] tracking-wide text-tt-subtle sm:text-xs">
           {subtitle}
         </span>
       ) : (

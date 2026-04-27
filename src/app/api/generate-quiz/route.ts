@@ -70,20 +70,27 @@ function buildUserPrompt(
   topic: string,
   difficulty: TriviaDifficulty,
   sessionTopics: string[] | undefined,
+  extraCreditTopic: string | undefined,
   gameSeed: string | undefined,
 ): string {
   const trimmed = topic.trim();
   const extra = isExtraCreditTopic(trimmed);
   const topicLine = extra
-    ? sessionTopics && sessionTopics.length > 0
+    ? extraCreditTopic && extraCreditTopic.trim().length > 0
       ? `Round: EXTRA CREDIT (final challenge).
+Assigned bonus topic: "${extraCreditTopic.trim()}".
+Generate all 10 questions strictly for that assigned topic.
+- Do NOT connect questions to earlier rounds.
+- Do NOT use synthesis/crossover format.`
+      : sessionTopics && sessionTopics.length > 0
+        ? `Round: EXTRA CREDIT (final challenge).
 The player completed topic rounds for: ${sessionTopics.map((t) => `"${t.trim()}"`).join(", ")}.
 
 Choose ONE random topic that is clearly unrelated to those completed topics and build all 10 questions around that one random topic.
 - Do NOT connect questions to the completed topics.
 - Do NOT use a synthesis/crossover format.
 - Keep the random topic coherent so the round feels like a standalone category.`
-      : `Round: EXTRA CREDIT (final challenge).
+        : `Round: EXTRA CREDIT (final challenge).
 Choose ONE random standalone topic and build all 10 questions around it.
 - Do NOT use synthesis/crossover questions.
 - Keep the random topic coherent across all 10 questions.`
@@ -226,13 +233,14 @@ async function generateWithModel(
   topic: string,
   difficulty: TriviaDifficulty,
   sessionTopics: string[] | undefined,
+  extraCreditTopic: string | undefined,
   gameSeed: string | undefined,
 ): Promise<{ questions: QuizQuestion[]; inputTokens: number; outputTokens: number; estimatedCostUsd: number }> {
   const message = await anthropic.messages.create({
     model,
     max_tokens: 8192,
     system: SYSTEM,
-    messages: [{ role: "user", content: buildUserPrompt(topic, difficulty, sessionTopics, gameSeed) }],
+    messages: [{ role: "user", content: buildUserPrompt(topic, difficulty, sessionTopics, extraCreditTopic, gameSeed) }],
   });
 
   const block = message.content.find((b) => b.type === "text");
@@ -282,6 +290,10 @@ export async function POST(req: Request) {
   const sessionTopics = Array.isArray(body.sessionTopics)
     ? body.sessionTopics.filter((t): t is string => typeof t === "string" && t.trim().length > 0).map((t) => t.trim())
     : undefined;
+  const extraCreditTopic =
+    typeof body.extraCreditTopic === "string" && body.extraCreditTopic.trim().length > 0
+      ? body.extraCreditTopic.trim()
+      : undefined;
   const gameSeed = typeof body.gameSeed === "string" && body.gameSeed.trim().length > 0 ? body.gameSeed.trim() : undefined;
   if (!topic.trim()) {
     return NextResponse.json({ error: "Topic is required" }, { status: 400 });
@@ -305,7 +317,7 @@ export async function POST(req: Request) {
 
   for (const model of candidates) {
     try {
-      const generated = await generateWithModel(anthropic, model, topic, difficulty, sessionTopics, gameSeed);
+      const generated = await generateWithModel(anthropic, model, topic, difficulty, sessionTopics, extraCreditTopic, gameSeed);
       await recordUsageEvent({
         source: "generate-quiz",
         inputTokens: generated.inputTokens,

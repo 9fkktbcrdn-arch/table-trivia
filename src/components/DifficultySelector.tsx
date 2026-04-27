@@ -7,10 +7,10 @@ interface DifficultySelectorProps {
   onSelect: (d: TriviaDifficulty) => void;
 }
 
-const levels: { id: TriviaDifficulty; label: string; emoji: string; hint: string }[] = [
-  { id: "noob", label: "Noob", emoji: "🟢", hint: "Easy — great for younger players" },
-  { id: "normal", label: "Normal", emoji: "🟡", hint: "Medium — family friendly" },
-  { id: "grandmaster", label: "Grand Master", emoji: "🔴", hint: "Hard — for superfans" },
+const levels: { id: TriviaDifficulty; label: string; hint: string; dotClass: string }[] = [
+  { id: "noob", label: "Noob", hint: "Easy — great for younger players", dotClass: "bg-tt-success" },
+  { id: "normal", label: "Normal", hint: "Medium — family friendly", dotClass: "bg-tt-gold" },
+  { id: "grandmaster", label: "Grand Master", hint: "Hard — for superfans", dotClass: "bg-tt-error" },
 ];
 
 export function DifficultySelector({ onSelect }: DifficultySelectorProps) {
@@ -24,12 +24,13 @@ export function DifficultySelector({ onSelect }: DifficultySelectorProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: i * 0.06 }}
           onClick={() => onSelect(L.id)}
-          className="flex min-h-[72px] flex-col items-start justify-center rounded-2xl border-2 border-tt-border bg-tt-surface/95 px-5 py-4 text-left shadow-md transition hover:border-tt-magenta/60 hover:shadow-[0_0_24px_rgba(232,121,249,0.12)] active:scale-[0.99]"
+          className="flex min-h-[64px] flex-col items-start justify-center rounded-xl border border-white/10 bg-tt-surface-mid px-4 py-2.5 text-left transition hover:border-tt-gold active:scale-[0.99]"
         >
-          <span className="font-stat text-xl font-bold text-white">
-            {L.emoji} {L.label}
+          <span className="flex items-center gap-2 font-body text-sm font-medium text-white">
+            <span className={`inline-block h-2.5 w-2.5 rounded-full ${L.dotClass}`} />
+            {L.label}
           </span>
-          <span className="mt-0.5 font-body text-sm text-zinc-400">{L.hint}</span>
+          <span className="mt-1 font-body text-xs text-tt-subtle">{L.hint}</span>
         </motion.button>
       ))}
     </div>

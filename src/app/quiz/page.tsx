@@ -28,6 +28,7 @@ function QuizFlow() {
   const addRoundCost = useTriviaStore((s) => s.addRoundCost);
   const lockedTopics = useTriviaStore((s) => s.lockedTopics);
   const currentGameSeed = useTriviaStore((s) => s.currentGameSeed);
+  const currentGameExtraCreditTopic = useTriviaStore((s) => s.currentGameExtraCreditTopic);
 
   const [difficulty, setDifficulty] = useState<TriviaDifficulty | null>(difficultyParam);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -80,7 +81,7 @@ function QuizFlow() {
           topic,
           difficulty,
           gameSeed: currentGameSeed,
-          ...(isExtraCredit ? { sessionTopics } : {}),
+          ...(isExtraCredit ? { sessionTopics, extraCreditTopic: currentGameExtraCreditTopic } : {}),
         }),
       });
       const data = (await res.json()) as {
@@ -114,7 +115,7 @@ function QuizFlow() {
     } finally {
       setLoading(false);
     }
-  }, [topic, difficulty, replayNonce, addUsage, addRoundCost, lockedTopics, currentGameSeed]);
+  }, [topic, difficulty, replayNonce, addUsage, addRoundCost, lockedTopics, currentGameSeed, currentGameExtraCreditTopic]);
 
   useEffect(() => {
     if (!topic) return;
@@ -261,22 +262,22 @@ function QuizFlow() {
 
   return (
     <div className="tt-screen flex min-h-dvh flex-col bg-tt-bg px-4 pb-8 pt-5 sm:px-6">
-      <div className="mb-4 rounded-2xl border border-tt-border/80 bg-tt-surface/75 p-3">
+      <div className="mb-4 rounded-2xl border border-[rgba(212,160,23,0.2)] bg-tt-surface p-4">
         <div className="flex items-center justify-between gap-2">
-          <Link href="/" className="tt-btn-ghost min-h-[44px] min-w-[44px] px-2 text-lg">
+          <Link href="/" className="tt-btn-ghost min-h-[40px] min-w-[40px] px-3 text-sm">
             ←
           </Link>
-          <p className="truncate px-1 font-body text-sm text-zinc-300">{displayTopic}</p>
-          <p className="font-stat text-xs uppercase tracking-wide text-zinc-400">{pointsTotal} pts</p>
+          <p className="truncate px-1 font-body text-sm text-tt-subtle">{displayTopic}</p>
+          <p className="font-body text-xs font-medium uppercase tracking-[0.08em] text-tt-subtle">{pointsTotal} pts</p>
         </div>
-        <div className="mt-2.5">
-          <div className="mb-1 flex items-center justify-between font-body text-xs text-zinc-500">
+        <div className="mt-3">
+          <div className="mb-1 flex items-center justify-between font-body text-xs text-tt-subtle">
             <span>Question {idx + 1}/10</span>
             <span>{Math.round(progressPct)}%</span>
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-tt-bg/80">
+          <div className="h-1 overflow-hidden rounded-full bg-tt-surface-mid">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-tt-cyan/90 to-tt-lime/80 transition-all duration-300"
+              className="h-full rounded-full bg-tt-gold transition-all duration-300"
               style={{ width: `${progressPct}%` }}
             />
           </div>
@@ -284,7 +285,7 @@ function QuizFlow() {
       </div>
 
       {demoMode && (
-        <p className="mb-3 rounded-xl border border-amber-500/40 bg-amber-950/35 px-3 py-2 font-body text-sm text-amber-100/95">
+        <p className="tt-alert mb-3">
           You&apos;re playing <strong>demo questions</strong> (no AI key). Add{" "}
           <code className="rounded bg-black/30 px-1">ANTHROPIC_API_KEY</code> to{" "}
           <code className="rounded bg-black/30 px-1">.env.local</code> for topic-specific AI quizzes.
@@ -296,7 +297,7 @@ function QuizFlow() {
         initial={{ opacity: 0, x: 16 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.2 }}
-        className="flex min-h-0 flex-1 flex-col rounded-2xl border border-tt-border/70 bg-tt-surface/60 p-3 sm:p-4"
+        className="flex min-h-0 flex-1 flex-col rounded-2xl border border-[rgba(212,160,23,0.2)] bg-tt-surface p-4"
       >
         <QuizQuestionView
           question={q}
@@ -326,18 +327,18 @@ function QuizFlow() {
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className={`font-stat text-xl font-bold ${feedback === "Nice!" ? "text-tt-lime" : "text-tt-amber"}`}
+              className={`font-stat text-[18px] font-bold ${feedback === "Nice!" ? "text-tt-success" : "text-tt-warning"}`}
             >
               {feedback}
             </motion.p>
-            <p className="mt-1 font-body text-sm text-zinc-400">
+            <p className="mt-1 font-body text-sm text-tt-subtle">
               {selected === q.correctIndex ? `+${perQuestionPoints} points` : `Worth ${perQuestionPoints} points`}
             </p>
           </div>
         )}
 
         {revealed && (
-          <div className="sticky bottom-2 mt-4 border-t border-tt-border/30 bg-gradient-to-t from-tt-bg via-tt-bg/95 to-transparent pt-3">
+          <div className="sticky bottom-2 mt-4 border-t border-[rgba(212,160,23,0.2)] bg-tt-bg pt-3">
             <button type="button" className="tt-btn-primary min-h-[52px] w-full" onClick={() => void onNext()}>
               {idx >= 9 ? "See Results" : "Next"}
             </button>

@@ -1,11 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { DM_Sans, Outfit } from "next/font/google";
 import "./globals.css";
 import type { ReactNode } from "react";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
-
-const outfit = Outfit({ subsets: ["latin"], variable: "--font-stat" });
-const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-body" });
 
 export const metadata: Metadata = {
   title: "Table Trivia",
@@ -15,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0a0e17",
+  themeColor: "#1A1915",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -31,7 +27,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
       </head>
       <body
-        className={`${outfit.variable} ${dmSans.variable} min-h-dvh bg-tt-bg font-body text-lg leading-relaxed text-parchment antialiased`}
+        className="min-h-dvh bg-tt-bg font-body text-base leading-relaxed text-parchment antialiased"
       >
         <ServiceWorkerRegister />
         {children}
