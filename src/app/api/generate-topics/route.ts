@@ -18,7 +18,7 @@ function modelCandidates(): string[] {
 
 function fallbackFromTheme(theme: string): string[] {
   const t = theme.trim() || "General";
-  return [`${t} Basics`, `${t} History`, `${t} People`, `${t} Moments`, `${t} Pop Culture`];
+  return [`${t} Basics`, `${t} History`, `${t} People`, `${t} Moments`, `${t} Pop Culture`, `${t} Discoveries`];
 }
 
 const FALLBACK_GIFTED12_POOL = [
@@ -59,7 +59,7 @@ const FALLBACK_MIDDLE_SCHOOL_POOL = [
 
 type RandomTarget = "gifted12" | "middle-school";
 
-function pickRandomTopics(pool: readonly string[], count = 5): string[] {
+function pickRandomTopics(pool: readonly string[], count = 6): string[] {
   const shuffled = [...pool];
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -82,59 +82,56 @@ function parseTopicsJson(text: string): string[] {
     .map((x) => (typeof x === "string" ? x.trim() : ""))
     .filter((x) => x.length >= 3 && x.length <= 40);
   const unique = [...new Set(cleaned)];
-  if (unique.length < 5) throw new Error("Not enough unique topics");
-  return unique.slice(0, 5);
+  if (unique.length < 6) throw new Error("Not enough unique topics");
+  return unique.slice(0, 6);
 }
 
 function prompt(theme: string): string {
   return `Theme seed: "${theme}"
 
-Generate exactly 5 related but distinct quiz topic names for a family trivia game night.
+Generate exactly 6 related but distinct quiz topic names for a family trivia game night.
 
 Rules:
 - Each topic must be broad enough for 10 quiz questions.
-- All 5 topics should feel adjacent to the theme seed, but not be duplicates.
+- All 6 topics should feel adjacent to the theme seed, but not be duplicates.
 - Use different angles (history, people, places, events, media, etc.) where possible.
 - Keep each topic 1-4 words.
-- Do not include "Extra Credit".
-- Return ONLY a JSON array of 5 strings, no markdown or extra text.
+- Return ONLY a JSON array of 6 strings, no markdown or extra text.
 
 Example format:
-["Space History","Famous Astronauts","Planet Facts","Sci-Fi Films","Rocket Technology"]`;
+["Space History","Famous Astronauts","Planet Facts","Sci-Fi Films","Rocket Technology","Space Discoveries"]`;
 }
 
 function promptGifted12(randomSeed?: string): string {
-  return `Generate exactly 5 distinct quiz category names for a very bright 12-year-old who wants real depth — science, strategy, history, and "cool facts" — never condescending, never grad-school obscure.
+  return `Generate exactly 6 distinct quiz category names for a very bright 12-year-old who wants real depth — science, strategy, history, and "cool facts" — never condescending, never grad-school obscure.
 
 Random seed: "${randomSeed ?? "none"}" (use this to vary the resulting category mix across requests)
 
 Rules:
 - Each category must be broad enough for 10 trivia questions.
-- Use five clearly different domains (no near-duplicates).
+- Use six clearly different domains (no near-duplicates).
 - Think: space/physics ideas, logic and riddles, world history, mythology, coding or game design, engineering, nature at a curious-kid level — pick a strong mix.
 - Keep each topic 1-4 words.
-- Do not include "Extra Credit".
-- Return ONLY a JSON array of 5 strings, no markdown or extra text.
+- Return ONLY a JSON array of 6 strings, no markdown or extra text.
 
 Example format:
-["Orbital Mechanics","Logic & Riddles","Ancient Civilizations","Mythology","How Computers Work"]`;
+["Orbital Mechanics","Logic & Riddles","Ancient Civilizations","Mythology","How Computers Work","Biome Mysteries"]`;
 }
 
 function promptMiddleSchool(randomSeed?: string): string {
-  return `Generate exactly 5 distinct quiz category names for a curious middle-school learner (roughly ages 11-14): challenging but approachable, broad and fun.
+  return `Generate exactly 6 distinct quiz category names for a curious middle-school learner (roughly ages 11-14): challenging but approachable, broad and fun.
 
 Random seed: "${randomSeed ?? "none"}" (use this to vary the resulting category mix across requests)
 
 Rules:
 - Each category must be broad enough for 10 trivia questions.
-- Use five clearly different domains (no near-duplicates).
+- Use six clearly different domains (no near-duplicates).
 - Include a balanced mix like science, world history, geography, inventions, technology, language, arts, or nature.
 - Keep each topic 1-4 words.
-- Do not include "Extra Credit".
-- Return ONLY a JSON array of 5 strings, no markdown or extra text.
+- Return ONLY a JSON array of 6 strings, no markdown or extra text.
 
 Example format:
-["Inventors & Inventions","World Geography","Ancient History","Space Science","Digital Technology"]`;
+["Inventors & Inventions","World Geography","Ancient History","Space Science","Digital Technology","Wildlife Biology"]`;
 }
 
 export async function POST(req: Request) {

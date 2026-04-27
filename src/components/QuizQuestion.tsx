@@ -13,7 +13,6 @@ interface QuizQuestionProps {
   /** Optional: lightweight QA — user flags a bad question (handled by parent). */
   onReportIssue?: () => void;
   issueReported?: boolean;
-  extraCredit?: boolean;
 }
 
 export function QuizQuestion({
@@ -25,19 +24,16 @@ export function QuizQuestion({
   onAnswer,
   onReportIssue,
   issueReported,
-  extraCredit,
 }: QuizQuestionProps) {
   const difficultyLabel =
     question.questionDifficulty === "easy" ? "Easy" : question.questionDifficulty === "medium" ? "Medium" : "Hard";
   return (
     <div className="flex w-full max-w-xl flex-col gap-6">
-      <p className="font-body text-[11px] font-semibold uppercase tracking-[0.08em] text-tt-subtle">
+      <p className="tt-label">
         Question {index + 1} of {total}
       </p>
-      <p className="font-body text-[11px] font-semibold uppercase tracking-[0.08em] text-tt-subtle">
-        {extraCredit ? `Extra Credit · ${difficultyLabel}` : difficultyLabel}
-      </p>
-      <h2 className="font-stat text-[16px] font-bold leading-snug text-white">{question.question}</h2>
+      <p className="tt-label">{difficultyLabel}</p>
+      <h2 className="font-stat text-[18px] font-bold leading-snug tracking-[-0.01em] text-white">{question.question}</h2>
       <div className="grid grid-cols-1 gap-3">
         {question.answers.map((label, i) => {
           let state: "idle" | "correct" | "incorrect" | "revealed-correct" = "idle";
@@ -68,8 +64,8 @@ export function QuizQuestion({
           role="note"
           aria-live="polite"
         >
-          <p className="font-body text-[11px] font-semibold uppercase tracking-[0.08em] text-tt-subtle">Why it&apos;s right</p>
-          <p className="mt-1.5 font-body text-sm leading-relaxed text-white">{question.explanation}</p>
+          <p className="tt-label">Why it&apos;s right</p>
+          <p className="tt-text-md mt-1.5">{question.explanation}</p>
         </div>
       ) : null}
 

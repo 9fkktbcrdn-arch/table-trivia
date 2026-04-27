@@ -1,34 +1,3 @@
-/** Sixth tile: bonus round with a random standalone topic. */
-export const EXTRA_CREDIT_LABEL = "Extra Credit";
-
-/** @deprecated Prefer EXTRA_CREDIT_LABEL — kept for saved browser state. */
-export const GENERAL_TRIVIA_LABEL = EXTRA_CREDIT_LABEL;
-
-export const LEGACY_GENERAL_TRIVIA_NAME = "General Trivia";
-
-export const EXTRA_CREDIT_RANDOM_TOPIC_POOL = [
-  "Classic Movies",
-  "Volcanoes",
-  "Ancient Egypt",
-  "Ocean Creatures",
-  "Basketball Legends",
-  "Famous Inventors",
-  "Space Missions",
-  "World Landmarks",
-  "Dinosaurs",
-  "Mythical Creatures",
-  "Music Through Decades",
-  "Extreme Weather",
-  "Famous Paintings",
-  "Airplanes & Flight",
-  "Great Explorers",
-  "Islands of the World",
-  "Olympic History",
-  "Human Body Facts",
-  "Wild Cats",
-  "Superstructures",
-] as const;
-
 export const LOADING_MESSAGES = [
   "Cooking up questions…",
   "Summoning the quiz master…",

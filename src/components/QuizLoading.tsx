@@ -44,7 +44,9 @@ export function QuizLoading() {
           ?
         </motion.span>
       </motion.div>
-      <p className="max-w-[280px] text-center font-stat text-[18px] text-tt-gold-bright">{LOADING_MESSAGES[i]}</p>
+      <p className="max-w-[280px] text-center font-body text-[18px] font-semibold tracking-[0.01em] text-tt-gold-bright">
+        {LOADING_MESSAGES[i]}
+      </p>
       <motion.p
         key={jokeIndex}
         initial={{ opacity: 0, y: 4 }}

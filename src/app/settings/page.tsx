@@ -7,7 +7,7 @@ import { isSupabaseConfigured } from "@/lib/supabase";
 import type { TopicRow } from "@/lib/types";
 import { useTriviaStore } from "@/store/trivia-store";
 
-const MAX_TOPICS = 5;
+const MAX_TOPICS = 6;
 const RANDOM_TARGET_STORAGE_KEY = "table-trivia-random-target";
 type RandomTarget = "gifted12" | "middle-school";
 
@@ -176,8 +176,8 @@ export default function SettingsPage() {
       await applyGeneratedTopics(
         data,
         randomTarget === "gifted12"
-          ? "Topics updated: 5 random gifted-12 categories."
-          : "Topics updated: 5 random middle-school categories.",
+          ? "Topics updated: 6 random gifted-12 categories."
+          : "Topics updated: 6 random middle-school categories.",
       );
     } catch {
       setNotice("Couldn't generate topics right now.");
@@ -203,12 +203,12 @@ export default function SettingsPage() {
 
   return (
     <div className="tt-screen flex min-h-dvh flex-col bg-tt-bg px-4 pb-10 pt-5 sm:px-6">
-      <header className="mb-5 flex items-center gap-3 rounded-2xl border border-[rgba(212,160,23,0.2)] bg-tt-surface px-3 py-2.5">
+      <header className="tt-panel mb-5 flex items-center gap-3 px-3 py-2.5">
         <Link href="/" className="tt-btn-ghost min-h-[48px] min-w-[48px] px-2">
           ←
         </Link>
         <div>
-          <h1 className="font-stat text-[18px] font-bold text-white">Topic Manager</h1>
+          <h1 className="tt-heading-lg">Topic Manager</h1>
           <p className="font-body text-sm text-tt-subtle">Saved on Supabase for every device.</p>
         </div>
       </header>
@@ -228,7 +228,7 @@ export default function SettingsPage() {
           {topics.map((t) => (
             <li
               key={t.id}
-              className="rounded-2xl border border-[rgba(212,160,23,0.2)] bg-tt-surface p-4"
+              className="tt-panel p-4"
             >
               <div className="flex items-center gap-2">
                 <input
@@ -239,12 +239,12 @@ export default function SettingsPage() {
                     const v = e.target.value.trim();
                     if (v && v !== t.name) void onRename(t.id, v);
                   }}
-                  className="min-h-[42px] w-full rounded-xl border border-white/10 bg-tt-surface-mid px-3 font-body text-sm text-white outline-none focus:border-tt-gold"
+                  className="min-h-[44px] w-full rounded-xl border border-white/10 bg-tt-surface-mid px-3 font-body text-sm text-white outline-none focus:border-tt-gold"
                   aria-label="Topic name"
                 />
                 <button
                   type="button"
-                  className="min-h-[34px] shrink-0 rounded-full border border-[rgba(232,64,64,0.3)] px-3 font-stat text-xs font-semibold text-tt-error disabled:opacity-50"
+                  className="min-h-[36px] shrink-0 rounded-full border border-[rgba(232,64,64,0.3)] px-3 font-body text-xs font-semibold tracking-[0.01em] text-tt-error disabled:opacity-50"
                   disabled={saving || inProgress}
                   onClick={() => void onDelete(t.id)}
                 >
@@ -256,20 +256,18 @@ export default function SettingsPage() {
         </ul>
       )}
 
-      <div className="mt-6 rounded-2xl border border-[rgba(212,160,23,0.2)] bg-tt-surface p-4">
-        <p className="font-body text-[11px] font-semibold uppercase tracking-[0.08em] text-tt-subtle">
-          Topic generator
-        </p>
+      <div className="tt-panel mt-6 p-4">
+        <p className="tt-label">Topic generator</p>
         <p className="mt-1 font-body text-xs text-tt-subtle">
           Edit topic names directly in the text boxes above, or generate a fresh set below.
         </p>
 
         <div className="mt-3 rounded-2xl border border-[rgba(212,160,23,0.2)] bg-tt-surface-mid p-4">
-          <p className="font-body text-[11px] font-semibold uppercase tracking-[0.08em] text-tt-subtle">Generate 5 topics</p>
+          <p className="tt-label">Generate 6 topics</p>
           <div className="mt-2 grid grid-cols-2 gap-2">
             <button
               type="button"
-              className={`min-h-[44px] rounded-xl border px-3 font-stat text-sm transition ${
+              className={`min-h-[44px] rounded-xl border px-3 font-body text-sm font-semibold tracking-[0.01em] transition ${
                 topicGeneratorMode === "theme"
                   ? "border-tt-gold bg-[rgba(212,160,23,0.15)] text-tt-gold-bright"
                   : "border-white/20 bg-transparent text-white hover:border-tt-gold"
@@ -281,7 +279,7 @@ export default function SettingsPage() {
             </button>
             <button
               type="button"
-              className={`min-h-[44px] rounded-xl border px-3 font-stat text-sm transition ${
+              className={`min-h-[44px] rounded-xl border px-3 font-body text-sm font-semibold tracking-[0.01em] transition ${
                 topicGeneratorMode === "random"
                   ? "border-tt-gold bg-[rgba(212,160,23,0.15)] text-tt-gold-bright"
                   : "border-white/20 bg-transparent text-white hover:border-tt-gold"
@@ -307,7 +305,7 @@ export default function SettingsPage() {
               />
               <button
                 type="button"
-                className="mt-3 min-h-[44px] w-full rounded-full border border-white/20 bg-transparent px-5 py-2.5 font-stat text-sm font-semibold text-white transition hover:border-tt-gold disabled:opacity-50 sm:mx-auto sm:block sm:w-[220px]"
+                className="tt-btn-secondary mt-3 min-h-[44px] w-full disabled:opacity-50 sm:mx-auto sm:block sm:w-[220px]"
                 disabled={saving || generatingKind !== null || inProgress}
                 onClick={() => void onGenerateThemeTopics()}
               >
@@ -316,11 +314,11 @@ export default function SettingsPage() {
             </div>
           ) : (
             <div className="mt-3">
-              <div className="flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-tt-surface px-3 py-2">
+              <div className="flex flex-col items-start gap-2 rounded-xl border border-white/10 bg-tt-surface px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
                 <p className="font-body text-xs text-tt-subtle">Aimed for</p>
                 <button
                   type="button"
-                  className="rounded-full border border-white/20 bg-transparent px-3 py-1 font-stat text-[11px] font-semibold uppercase tracking-[0.08em] text-white hover:border-tt-gold"
+                  className="rounded-full border border-white/20 bg-transparent px-3 py-1 font-body text-[11px] font-semibold uppercase tracking-[0.08em] text-white hover:border-tt-gold"
                   disabled={saving || generatingKind !== null || inProgress}
                   onClick={() => {
                     const next: RandomTarget = randomTarget === "gifted12" ? "middle-school" : "gifted12";
@@ -335,7 +333,7 @@ export default function SettingsPage() {
               </div>
               <button
                 type="button"
-                className="mt-3 min-h-[44px] w-full rounded-full border border-white/20 bg-transparent px-5 py-2.5 font-stat text-sm font-semibold text-white transition hover:border-tt-gold disabled:opacity-50 sm:mx-auto sm:block sm:w-[220px]"
+                className="tt-btn-secondary mt-3 min-h-[44px] w-full disabled:opacity-50 sm:mx-auto sm:block sm:w-[220px]"
                 disabled={saving || generatingKind !== null || inProgress}
                 onClick={() => void onRandomGiftedTopics()}
               >
@@ -346,8 +344,8 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="mt-6 rounded-2xl border border-[rgba(212,160,23,0.2)] bg-tt-surface p-4">
-        <p className="font-body text-[11px] font-semibold uppercase tracking-[0.08em] text-tt-subtle">AI token usage</p>
+      <div className="tt-panel mt-6 p-4">
+        <p className="tt-label">AI token usage</p>
         {usageLoading ? (
           <p className="mt-1 font-body text-xs text-tt-subtle">Loading…</p>
         ) : supabaseOk && cloudUsage ? (

@@ -12,7 +12,7 @@ import { saveScore } from "@/lib/db";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import type { QuizQuestion, TriviaDifficulty } from "@/lib/types";
 import { maxPointsForQuestions, pointsForQuestion } from "@/lib/scoring";
-import { EXTRA_CREDIT_LABEL, MODERATOR_CORRECT_QUIPS, MODERATOR_WRONG_QUIPS } from "@/lib/trivia-constants";
+import { MODERATOR_CORRECT_QUIPS, MODERATOR_WRONG_QUIPS } from "@/lib/trivia-constants";
 import { useTriviaStore } from "@/store/trivia-store";
 
 function QuizFlow() {
@@ -28,7 +28,6 @@ function QuizFlow() {
   const addRoundCost = useTriviaStore((s) => s.addRoundCost);
   const lockedTopics = useTriviaStore((s) => s.lockedTopics);
   const currentGameSeed = useTriviaStore((s) => s.currentGameSeed);
-  const currentGameExtraCreditTopic = useTriviaStore((s) => s.currentGameExtraCreditTopic);
 
   const [difficulty, setDifficulty] = useState<TriviaDifficulty | null>(difficultyParam);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -71,8 +70,6 @@ function QuizFlow() {
     setIssueReportedForQuestion(false);
     void replayNonce;
     try {
-      const isExtraCredit = topic.trim().toLowerCase() === EXTRA_CREDIT_LABEL.toLowerCase();
-      const sessionTopics = lockedTopics.filter((t) => t.toLowerCase() !== EXTRA_CREDIT_LABEL.toLowerCase());
       const res = await fetch("/api/generate-quiz", {
         method: "POST",
         cache: "no-store",
@@ -81,7 +78,6 @@ function QuizFlow() {
           topic,
           difficulty,
           gameSeed: currentGameSeed,
-          ...(isExtraCredit ? { sessionTopics, extraCreditTopic: currentGameExtraCreditTopic } : {}),
         }),
       });
       const data = (await res.json()) as {
@@ -115,7 +111,7 @@ function QuizFlow() {
     } finally {
       setLoading(false);
     }
-  }, [topic, difficulty, replayNonce, addUsage, addRoundCost, lockedTopics, currentGameSeed, currentGameExtraCreditTopic]);
+  }, [topic, difficulty, replayNonce, addUsage, addRoundCost, currentGameSeed]);
 
   useEffect(() => {
     if (!topic) return;
@@ -136,10 +132,7 @@ function QuizFlow() {
       setModeratorQuip(MODERATOR_CORRECT_QUIPS[Math.floor(Math.random() * MODERATOR_CORRECT_QUIPS.length)] ?? "Nice!");
       setCorrectTotal((c) => c + 1);
       if (difficulty) {
-        const extraCredit = topic.trim().toLowerCase() === EXTRA_CREDIT_LABEL.toLowerCase();
-        setPointsTotal((p) =>
-          p + pointsForQuestion(difficulty, questions[idx].questionDifficulty, { extraCredit }),
-        );
+        setPointsTotal((p) => p + pointsForQuestion(difficulty, questions[idx].questionDifficulty));
       }
     } else {
       setModeratorQuip(MODERATOR_WRONG_QUIPS[Math.floor(Math.random() * MODERATOR_WRONG_QUIPS.length)] ?? "Not quite!");
@@ -154,15 +147,12 @@ function QuizFlow() {
       setRevealed(false);
       return;
     }
-    const extraCredit = topic.trim().toLowerCase() === EXTRA_CREDIT_LABEL.toLowerCase();
-    const maxPoints = maxPointsForQuestions(difficulty, questions, { extraCredit });
+    const maxPoints = maxPointsForQuestions(difficulty, questions);
     completeTopic(topic, pointsTotal, correctTotal, maxPoints);
     const state = useTriviaStore.getState();
-    const normalizeTopic = (name: string) =>
-      name.trim().toLowerCase() === "general trivia" ? EXTRA_CREDIT_LABEL.toLowerCase() : name.trim().toLowerCase();
     const expectedTopics = [...new Set(state.lockedTopics.map((t) => t.trim()).filter((t) => t.length > 0))];
-    const completedNormalized = new Set(state.completedTopics.map(normalizeTopic));
-    const completedExpectedCount = expectedTopics.filter((t) => completedNormalized.has(normalizeTopic(t))).length;
+    const completedNormalized = new Set(state.completedTopics.map((name) => name.trim().toLowerCase()));
+    const completedExpectedCount = expectedTopics.filter((t) => completedNormalized.has(t.trim().toLowerCase())).length;
     const finished = expectedTopics.length >= 2 && completedExpectedCount >= expectedTopics.length;
     if (finished) {
       await saveScore({
@@ -187,7 +177,7 @@ function QuizFlow() {
   if (!topic?.trim()) {
     return (
       <div className="tt-screen flex min-h-dvh flex-col items-center justify-center gap-4 px-4">
-        <p className="font-body text-lg text-zinc-400">Missing topic.</p>
+        <p className="tt-text-lg text-tt-subtle">Missing topic.</p>
         <Link href="/" className="tt-btn-primary min-h-[48px] px-6">
           Home
         </Link>
@@ -197,7 +187,7 @@ function QuizFlow() {
   if (!playerName) {
     return (
       <div className="tt-screen flex min-h-dvh flex-col items-center justify-center gap-4 px-4">
-        <p className="font-body text-lg text-zinc-400">Pick a player first.</p>
+        <p className="tt-text-lg text-tt-subtle">Pick a player first.</p>
         <Link href="/" className="tt-btn-primary min-h-[48px] px-6">
           Home
         </Link>
@@ -215,11 +205,11 @@ function QuizFlow() {
             ←
           </Link>
           <div>
-            <p className="font-stat text-xs uppercase tracking-widest text-tt-cyan/80">Topic</p>
-            <h1 className="font-stat text-2xl font-bold text-white">{displayTopic}</h1>
+            <p className="tt-label text-tt-cyan/80">Topic</p>
+            <h1 className="tt-heading-lg">{displayTopic}</h1>
           </div>
         </div>
-        <p className="mb-4 font-body text-lg text-zinc-400">Choose difficulty</p>
+        <p className="tt-text-lg mb-4 text-tt-subtle">Choose difficulty</p>
         <DifficultySelector onSelect={onSelectDifficulty} />
       </div>
     );
@@ -236,7 +226,7 @@ function QuizFlow() {
   if (error || questions.length === 0) {
     return (
       <div className="tt-screen flex min-h-dvh flex-col items-center justify-center gap-6 bg-tt-bg px-4">
-        <p className="text-center font-body text-lg text-tt-rose/95">{error ?? "Something went wrong."}</p>
+        <p className="text-center font-body text-base font-medium text-tt-rose/95">{error ?? "Something went wrong."}</p>
         <button type="button" className="tt-btn-primary min-h-[48px] px-8" onClick={() => void fetchQuiz()}>
           Try again
         </button>
@@ -248,10 +238,7 @@ function QuizFlow() {
   }
 
   const q = questions[idx];
-  const isExtraCreditRound = displayTopic.trim().toLowerCase() === EXTRA_CREDIT_LABEL.toLowerCase();
-  const perQuestionPoints = difficulty
-    ? pointsForQuestion(difficulty, q.questionDifficulty, { extraCredit: isExtraCreditRound })
-    : 0;
+  const perQuestionPoints = difficulty ? pointsForQuestion(difficulty, q.questionDifficulty) : 0;
   const progressPct = ((idx + 1) / 10) * 100;
   const feedback =
     revealed && selected !== null
@@ -262,7 +249,7 @@ function QuizFlow() {
 
   return (
     <div className="tt-screen flex min-h-dvh flex-col bg-tt-bg px-4 pb-8 pt-5 sm:px-6">
-      <div className="mb-4 rounded-2xl border border-[rgba(212,160,23,0.2)] bg-tt-surface p-4">
+      <div className="tt-panel mb-4 p-4">
         <div className="flex items-center justify-between gap-2">
           <Link href="/" className="tt-btn-ghost min-h-[40px] min-w-[40px] px-3 text-sm">
             ←
@@ -297,7 +284,7 @@ function QuizFlow() {
         initial={{ opacity: 0, x: 16 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.2 }}
-        className="flex min-h-0 flex-1 flex-col rounded-2xl border border-[rgba(212,160,23,0.2)] bg-tt-surface p-4"
+        className="tt-panel flex min-h-0 flex-1 flex-col p-4"
       >
         <QuizQuestionView
           question={q}
@@ -306,7 +293,6 @@ function QuizFlow() {
           selectedIndex={selected}
           revealed={revealed}
           onAnswer={onPickAnswer}
-          extraCredit={isExtraCreditRound}
           issueReported={issueReportedForQuestion}
           onReportIssue={() => {
             if (!topic || !difficulty) return;
@@ -327,18 +313,18 @@ function QuizFlow() {
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className={`font-stat text-[18px] font-bold ${feedback === "Nice!" ? "text-tt-success" : "text-tt-warning"}`}
+              className={`font-stat text-[18px] font-bold tracking-[-0.01em] ${feedback === "Nice!" ? "text-tt-success" : "text-tt-warning"}`}
             >
               {feedback}
             </motion.p>
-            <p className="mt-1 font-body text-sm text-tt-subtle">
+            <p className="tt-text-sm mt-1">
               {selected === q.correctIndex ? `+${perQuestionPoints} points` : `Worth ${perQuestionPoints} points`}
             </p>
           </div>
         )}
 
         {revealed && (
-          <div className="sticky bottom-2 mt-4 border-t border-[rgba(212,160,23,0.2)] bg-tt-bg pt-3">
+          <div className="sticky bottom-0 mt-4 border-t border-[rgba(212,160,23,0.2)] bg-tt-bg pb-[max(8px,env(safe-area-inset-bottom))] pt-3">
             <button type="button" className="tt-btn-primary min-h-[52px] w-full" onClick={() => void onNext()}>
               {idx >= 9 ? "See Results" : "Next"}
             </button>
@@ -353,7 +339,7 @@ export default function QuizPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-dvh items-center justify-center bg-tt-bg font-body text-zinc-500">Loading…</div>
+        <div className="tt-text-sm flex min-h-dvh items-center justify-center bg-tt-bg">Loading…</div>
       }
     >
       <QuizFlow />

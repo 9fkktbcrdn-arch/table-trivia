@@ -49,54 +49,14 @@ function difficultyGuidance(d: TriviaDifficulty): string {
   }
 }
 
-function extraCreditDifficultyGuidance(d: TriviaDifficulty): string {
-  switch (d) {
-    case "noob":
-      return `EXTRA CREDIT profile (still family-friendly but tougher than a normal round): blend 3 easy, 4 medium, 3 hard.`;
-    case "normal":
-      return `EXTRA CREDIT profile (harder than normal): blend 1 easy, 3 medium, 6 hard.`;
-    case "grandmaster":
-      return `EXTRA CREDIT profile (maximum challenge): blend 0 easy, 2 medium, 8 hard.`;
-    default:
-      return "";
-  }
-}
-
-function isExtraCreditTopic(topic: string): boolean {
-  return topic.trim().toLowerCase() === "extra credit";
-}
-
 function buildUserPrompt(
   topic: string,
   difficulty: TriviaDifficulty,
-  sessionTopics: string[] | undefined,
-  extraCreditTopic: string | undefined,
   gameSeed: string | undefined,
 ): string {
   const trimmed = topic.trim();
-  const extra = isExtraCreditTopic(trimmed);
-  const topicLine = extra
-    ? extraCreditTopic && extraCreditTopic.trim().length > 0
-      ? `Round: EXTRA CREDIT (final challenge).
-Assigned bonus topic: "${extraCreditTopic.trim()}".
-Generate all 10 questions strictly for that assigned topic.
-- Do NOT connect questions to earlier rounds.
-- Do NOT use synthesis/crossover format.`
-      : sessionTopics && sessionTopics.length > 0
-        ? `Round: EXTRA CREDIT (final challenge).
-The player completed topic rounds for: ${sessionTopics.map((t) => `"${t.trim()}"`).join(", ")}.
-
-Choose ONE random topic that is clearly unrelated to those completed topics and build all 10 questions around that one random topic.
-- Do NOT connect questions to the completed topics.
-- Do NOT use a synthesis/crossover format.
-- Keep the random topic coherent so the round feels like a standalone category.`
-        : `Round: EXTRA CREDIT (final challenge).
-Choose ONE random standalone topic and build all 10 questions around it.
-- Do NOT use synthesis/crossover questions.
-- Keep the random topic coherent across all 10 questions.`
-    : `Topic: "${trimmed}". All questions must be clearly about this topic.`;
-
-  const guidance = extra ? extraCreditDifficultyGuidance(difficulty) : difficultyGuidance(difficulty);
+  const topicLine = `Topic: "${trimmed}". All questions must be clearly about this topic.`;
+  const guidance = difficultyGuidance(difficulty);
 
   return `${topicLine}
 
@@ -214,33 +174,18 @@ function expectedDifficultyMix(difficulty: TriviaDifficulty): Record<QuestionDif
   }
 }
 
-function expectedDifficultyMixExtraCredit(difficulty: TriviaDifficulty): Record<QuestionDifficulty, number> {
-  switch (difficulty) {
-    case "noob":
-      return { easy: 3, medium: 4, hard: 3 };
-    case "normal":
-      return { easy: 1, medium: 3, hard: 6 };
-    case "grandmaster":
-      return { easy: 0, medium: 2, hard: 8 };
-    default:
-      return { easy: 1, medium: 3, hard: 6 };
-  }
-}
-
 async function generateWithModel(
   anthropic: Anthropic,
   model: string,
   topic: string,
   difficulty: TriviaDifficulty,
-  sessionTopics: string[] | undefined,
-  extraCreditTopic: string | undefined,
   gameSeed: string | undefined,
 ): Promise<{ questions: QuizQuestion[]; inputTokens: number; outputTokens: number; estimatedCostUsd: number }> {
   const message = await anthropic.messages.create({
     model,
     max_tokens: 8192,
     system: SYSTEM,
-    messages: [{ role: "user", content: buildUserPrompt(topic, difficulty, sessionTopics, extraCreditTopic, gameSeed) }],
+    messages: [{ role: "user", content: buildUserPrompt(topic, difficulty, gameSeed) }],
   });
 
   const block = message.content.find((b) => b.type === "text");
@@ -265,8 +210,7 @@ async function generateWithModel(
   }
   const counts = { easy: 0, medium: 0, hard: 0 };
   for (const q of validated) counts[q.questionDifficulty]++;
-  const extra = isExtraCreditTopic(topic);
-  const expected = extra ? expectedDifficultyMixExtraCredit(difficulty) : expectedDifficultyMix(difficulty);
+  const expected = expectedDifficultyMix(difficulty);
   if (counts.easy !== expected.easy || counts.medium !== expected.medium || counts.hard !== expected.hard) {
     throw new Error("Wrong difficulty mix");
   }
@@ -287,13 +231,6 @@ export async function POST(req: Request) {
 
   const topic = typeof body.topic === "string" ? body.topic : "";
   const difficulty = body.difficulty;
-  const sessionTopics = Array.isArray(body.sessionTopics)
-    ? body.sessionTopics.filter((t): t is string => typeof t === "string" && t.trim().length > 0).map((t) => t.trim())
-    : undefined;
-  const extraCreditTopic =
-    typeof body.extraCreditTopic === "string" && body.extraCreditTopic.trim().length > 0
-      ? body.extraCreditTopic.trim()
-      : undefined;
   const gameSeed = typeof body.gameSeed === "string" && body.gameSeed.trim().length > 0 ? body.gameSeed.trim() : undefined;
   if (!topic.trim()) {
     return NextResponse.json({ error: "Topic is required" }, { status: 400 });
@@ -317,7 +254,7 @@ export async function POST(req: Request) {
 
   for (const model of candidates) {
     try {
-      const generated = await generateWithModel(anthropic, model, topic, difficulty, sessionTopics, extraCreditTopic, gameSeed);
+      const generated = await generateWithModel(anthropic, model, topic, difficulty, gameSeed);
       await recordUsageEvent({
         source: "generate-quiz",
         inputTokens: generated.inputTokens,

@@ -29,7 +29,7 @@ export function AnswerButton({ label, index, onClick, state, disabled }: AnswerB
       onClick={onClick}
       className={`${base} ${styles}`}
     >
-      <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[rgba(212,160,23,0.15)] font-stat text-[12px] font-bold text-tt-gold">
+      <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[rgba(212,160,23,0.15)] font-body text-[12px] font-semibold text-tt-gold">
         {letter}
       </span>
       <span className="text-white">{label}</span>

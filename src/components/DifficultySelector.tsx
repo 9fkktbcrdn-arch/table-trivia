@@ -15,7 +15,7 @@ const levels: { id: TriviaDifficulty; label: string; hint: string; dotClass: str
 
 export function DifficultySelector({ onSelect }: DifficultySelectorProps) {
   return (
-    <div className="flex w-full max-w-md flex-col gap-4">
+    <div className="flex w-full max-w-md flex-col gap-3">
       {levels.map((L, i) => (
         <motion.button
           key={L.id}
@@ -24,13 +24,13 @@ export function DifficultySelector({ onSelect }: DifficultySelectorProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: i * 0.06 }}
           onClick={() => onSelect(L.id)}
-          className="flex min-h-[64px] flex-col items-start justify-center rounded-xl border border-white/10 bg-tt-surface-mid px-4 py-2.5 text-left transition hover:border-tt-gold active:scale-[0.99]"
+          className="tt-panel flex min-h-[68px] flex-col items-start justify-center bg-tt-surface-mid px-4 py-3 text-left transition hover:border-tt-gold active:scale-[0.99]"
         >
-          <span className="flex items-center gap-2 font-body text-sm font-medium text-white">
+          <span className="flex items-center gap-2 font-body text-sm font-semibold text-white">
             <span className={`inline-block h-2.5 w-2.5 rounded-full ${L.dotClass}`} />
             {L.label}
           </span>
-          <span className="mt-1 font-body text-xs text-tt-subtle">{L.hint}</span>
+          <span className="tt-text-xs mt-1">{L.hint}</span>
         </motion.button>
       ))}
     </div>

@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Syne:wght@600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -16,27 +16,86 @@ body {
   background: #1a1915;
   color: #fff8e7;
   font-family: "Inter", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 * {
   box-sizing: border-box;
 }
 
+@media (max-width: 420px) {
+  .tt-screen {
+    max-width: 100%;
+  }
+
+  .tt-heading-xl {
+    font-size: 22px;
+    line-height: 1.15;
+  }
+
+  .tt-heading-lg {
+    font-size: 19px;
+    line-height: 1.2;
+  }
+
+  .tt-btn-primary,
+  .tt-btn-secondary,
+  .tt-btn-ghost {
+    min-height: 46px;
+    padding-left: 14px;
+    padding-right: 14px;
+    font-size: 14px;
+  }
+}
+
 @layer components {
+  .tt-panel {
+    @apply rounded-2xl border border-[rgba(212,160,23,0.2)] bg-tt-surface;
+  }
+
+  .tt-heading-xl {
+    @apply font-stat text-[24px] font-bold leading-tight tracking-[-0.01em] text-tt-gold sm:text-[28px];
+  }
+
+  .tt-heading-lg {
+    @apply font-stat text-[20px] font-bold leading-tight tracking-[-0.01em] text-white sm:text-[22px];
+  }
+
+  .tt-label {
+    @apply font-body text-[11px] font-semibold uppercase tracking-[0.08em] text-tt-subtle;
+  }
+
+  .tt-text-lg {
+    @apply font-body text-base leading-relaxed text-white;
+  }
+
+  .tt-text-md {
+    @apply font-body text-sm leading-relaxed text-white;
+  }
+
+  .tt-text-sm {
+    @apply font-body text-sm text-tt-subtle;
+  }
+
+  .tt-text-xs {
+    @apply font-body text-xs text-tt-subtle;
+  }
+
   .tt-screen {
     @apply mx-auto w-full max-w-4xl;
   }
 
   .tt-btn-primary {
-    @apply rounded-full border-0 bg-tt-gold px-4 py-2.5 font-stat text-sm font-bold text-tt-bg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-tt-gold focus-visible:ring-offset-2 focus-visible:ring-offset-tt-bg active:scale-[0.99] disabled:opacity-50 sm:px-5 sm:text-base;
+    @apply rounded-full border-0 bg-tt-gold px-4 py-2.5 font-body text-sm font-semibold tracking-[0.01em] text-tt-bg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-tt-gold focus-visible:ring-offset-2 focus-visible:ring-offset-tt-bg active:scale-[0.99] disabled:opacity-50 sm:px-5 sm:text-base;
   }
 
   .tt-btn-secondary {
-    @apply rounded-full border border-white/20 bg-transparent px-4 py-2.5 font-stat text-sm font-semibold text-white transition focus:outline-none focus-visible:ring-2 focus-visible:ring-tt-gold focus-visible:ring-offset-2 focus-visible:ring-offset-tt-bg active:scale-[0.99] sm:px-5 sm:text-base;
+    @apply rounded-full border border-white/20 bg-transparent px-4 py-2.5 font-body text-sm font-semibold tracking-[0.01em] text-white transition focus:outline-none focus-visible:ring-2 focus-visible:ring-tt-gold focus-visible:ring-offset-2 focus-visible:ring-offset-tt-bg active:scale-[0.99] sm:px-5 sm:text-base;
   }
 
   .tt-btn-ghost {
-    @apply rounded-full border border-white/20 bg-transparent px-4 py-2.5 font-stat text-sm font-semibold text-white transition hover:border-tt-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-tt-gold focus-visible:ring-offset-2 focus-visible:ring-offset-tt-bg sm:px-5 sm:text-base;
+    @apply rounded-full border border-white/20 bg-transparent px-4 py-2.5 font-body text-sm font-semibold tracking-[0.01em] text-white transition hover:border-tt-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-tt-gold focus-visible:ring-offset-2 focus-visible:ring-offset-tt-bg sm:px-5 sm:text-base;
   }
 
   .tt-alert {

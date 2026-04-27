@@ -6,7 +6,6 @@ import { useEffect, useState } from "react";
 import { TopicCard } from "@/components/TopicCard";
 import { getTopics } from "@/lib/db";
 import { isSupabaseConfigured } from "@/lib/supabase";
-import { EXTRA_CREDIT_LABEL, LEGACY_GENERAL_TRIVIA_NAME } from "@/lib/trivia-constants";
 import type { TopicRow } from "@/lib/types";
 import { useTriviaStore } from "@/store/trivia-store";
 
@@ -22,7 +21,6 @@ export default function HomePage() {
   const completedTopics = useTriviaStore((s) => s.completedTopics);
   const startGame = useTriviaStore((s) => s.startGame);
   const resetGame = useTriviaStore((s) => s.resetGame);
-  const currentGameExtraCreditTopic = useTriviaStore((s) => s.currentGameExtraCreditTopic);
 
   useEffect(() => {
     let cancelled = false;
@@ -46,17 +44,10 @@ export default function HomePage() {
     }
   }, [inProgress, lockedTopics.length, resetGame]);
 
-  const slots: (TopicRow | null)[] = [0, 1, 2, 3, 4].map((i) => topics[i] ?? null);
-  const topicNames = [...slots.map((t) => t?.name).filter(Boolean), EXTRA_CREDIT_LABEL] as string[];
+  const slots: (TopicRow | null)[] = [0, 1, 2, 3, 4, 5].map((i) => topics[i] ?? null);
+  const topicNames = slots.map((t) => t?.name).filter((name): name is string => Boolean(name));
 
-  const topicIsDone = (name: string) =>
-    completedTopics.includes(name) ||
-    (name === EXTRA_CREDIT_LABEL && completedTopics.includes(LEGACY_GENERAL_TRIVIA_NAME));
-  const extraCardTitle =
-    inProgress && currentGameExtraCreditTopic.trim().length > 0 ? currentGameExtraCreditTopic : EXTRA_CREDIT_LABEL;
-  const extraCardSubtitle = inProgress
-    ? "Extra Credit · 2× points"
-    : "Random bonus topic · 2× points";
+  const topicIsDone = (name: string) => completedTopics.includes(name);
 
   const goTopic = (name: string) => {
     if (!playerName) return;
@@ -70,18 +61,18 @@ export default function HomePage() {
 
   return (
     <div className="tt-screen relative flex min-h-dvh flex-col bg-tt-bg">
-      <header className="flex shrink-0 items-center justify-between gap-4 border-b border-[rgba(212,160,23,0.2)] bg-tt-surface px-4 py-4 sm:px-6">
+      <header className="tt-panel flex shrink-0 items-start justify-between gap-3 rounded-none border-x-0 border-t-0 px-4 py-3.5 sm:items-center sm:gap-4 sm:py-4 sm:px-6">
         <div className="min-w-0">
-          <h1 className="font-stat text-[22px] font-extrabold tracking-tight text-tt-gold sm:text-[22px]">Quiz Monster</h1>
-          <p className="mt-1 font-body text-sm text-tt-subtle sm:text-sm">
+          <h1 className="tt-heading-xl">Quiz Monster</h1>
+          <p className="mt-1 max-w-[220px] font-body text-sm text-tt-subtle sm:max-w-none sm:text-sm">
             {inProgress ? `Game in progress for ${playerName}. Finish all topics.` : "Pick a topic to start a round."}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           {inProgress ? (
             <button
               type="button"
-              className="tt-btn-ghost min-h-[44px] px-3 text-sm"
+              className="tt-btn-ghost min-h-[42px] px-2.5 text-xs sm:min-h-[44px] sm:px-3 sm:text-sm"
               onClick={() => {
                 if (confirm("Restart current game? This clears progress.")) resetGame();
               }}
@@ -91,14 +82,14 @@ export default function HomePage() {
           ) : null}
           <Link
             href="/scores"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/20 bg-transparent text-lg text-white transition hover:border-tt-gold"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/20 bg-transparent text-base text-white transition hover:border-tt-gold sm:h-11 sm:w-11 sm:text-lg"
             aria-label="High scores"
           >
             🏆
           </Link>
           <Link
             href="/settings"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/20 bg-transparent text-lg text-white transition hover:border-tt-gold"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/20 bg-transparent text-base text-white transition hover:border-tt-gold sm:h-11 sm:w-11 sm:text-lg"
             aria-label="Topic manager"
           >
             ⚙️
@@ -106,8 +97,8 @@ export default function HomePage() {
         </div>
       </header>
       {!playerName && (
-        <div className="mx-4 mt-4 rounded-2xl border border-[rgba(212,160,23,0.2)] bg-tt-surface p-4 sm:mx-6">
-          <p className="font-body text-[11px] font-semibold uppercase tracking-[0.08em] text-tt-subtle">Who is playing?</p>
+        <div className="tt-panel mx-4 mt-4 p-4 sm:mx-6">
+          <p className="tt-label">Who is playing?</p>
           <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
             <button type="button" className="tt-btn-primary min-h-[48px]" onClick={() => setPlayer("KJC")}>
               KJC
@@ -153,7 +144,7 @@ export default function HomePage() {
         {loading ? (
           <div className="flex flex-1 items-center justify-center font-body text-sm text-tt-subtle">Loading topics…</div>
         ) : (
-          <div className="mx-auto grid w-full max-w-lg grid-cols-2 gap-3.5 sm:max-w-2xl sm:gap-4 md:max-w-4xl md:grid-cols-3">
+          <div className="mx-auto grid w-full max-w-lg grid-cols-2 gap-2.5 sm:max-w-2xl sm:gap-4 md:max-w-4xl md:grid-cols-3">
             {slots.map((row, idx) =>
               row ? (
                 <div key={row.id} className="min-w-0">
@@ -177,17 +168,6 @@ export default function HomePage() {
                 </div>
               ),
             )}
-
-            <div className="min-w-0">
-              <TopicCard
-                title={extraCardTitle}
-                subtitle={extraCardSubtitle}
-                onClick={() => goTopic(EXTRA_CREDIT_LABEL)}
-                variant="extra"
-                disabled={!playerName || (inProgress && topicIsDone(EXTRA_CREDIT_LABEL))}
-                completed={topicIsDone(EXTRA_CREDIT_LABEL)}
-              />
-            </div>
 
           </div>
         )}

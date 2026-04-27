@@ -59,7 +59,7 @@ function ResultsInner() {
   )) {
     return (
       <div className="tt-screen flex min-h-dvh flex-col items-center justify-center gap-4 bg-tt-bg px-4">
-        <p className="font-body text-sm text-tt-subtle">Nothing to show yet.</p>
+        <p className="tt-text-sm">Nothing to show yet.</p>
         <Link href="/" className="tt-btn-primary min-h-[48px] px-6">
           Home
         </Link>
@@ -77,19 +77,19 @@ function ResultsInner() {
       <motion.div
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="w-full max-w-md rounded-2xl border border-[rgba(212,160,23,0.2)] bg-tt-surface p-8 text-center"
+        className="tt-panel w-full max-w-md p-8 text-center"
       >
-        <p className="font-body text-[11px] font-semibold uppercase tracking-[0.08em] text-tt-subtle">{game ? "Game Complete" : "Results"}</p>
-        <h1 className="mt-2 font-stat text-[22px] font-extrabold text-white">
+        <p className="tt-label">{game ? "Game Complete" : "Results"}</p>
+        <h1 className="mt-2 font-stat text-[24px] font-bold tracking-[-0.01em] text-white sm:text-[28px]">
           {points} / {maxPoints} pts <span aria-hidden>🎉</span>
         </h1>
-        <p className="mt-2 font-body text-sm text-tt-subtle">{game ? `${totalCorrect} correct across all topics` : `${score} correct out of 10 questions`}</p>
-        <p className="mt-4 font-body text-sm leading-relaxed text-white">{scoreMessage(scoreRatio)}</p>
-        <p className="mt-2 font-body text-sm text-tt-subtle">
+        <p className="tt-text-sm mt-2">{game ? `${totalCorrect} correct across all topics` : `${score} correct out of 10 questions`}</p>
+        <p className="tt-text-md mt-4">{scoreMessage(scoreRatio)}</p>
+        <p className="tt-text-sm mt-2">
           {game ? `${player ?? "Guest"} · Full game` : `${topic} · ${difficultyLabel(difficulty)}`}
         </p>
         {game && !Number.isNaN(roundCost) ? (
-          <p className="mt-1 font-body text-xs text-tt-subtle">AI cost this game: ${roundCost.toFixed(4)}</p>
+          <p className="tt-text-xs mt-1">AI cost this game: ${roundCost.toFixed(4)}</p>
         ) : null}
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
           {!game ? (
@@ -119,7 +119,7 @@ export default function ResultsPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-dvh items-center justify-center bg-tt-bg font-body text-tt-subtle">Loading…</div>
+        <div className="tt-text-sm flex min-h-dvh items-center justify-center bg-tt-bg">Loading…</div>
       }
     >
       <ResultsInner />
